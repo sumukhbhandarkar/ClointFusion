@@ -2,6 +2,34 @@
 # ADD this line to settings.json in your Visual Studio Code >> "terminal.integrated.shellArgs.windows": ["-ExecutionPolicy", "Bypass"],
 # Project Name: ClointFusion
 # Project Description: A Python based RPA Automation Framework for Desktop GUI,Citrix, Web and basic excel operations.
+import subprocess
+import os
+import time
+import sys
+import platform
+
+current_environment = 0
+os_path=os.environ['USERPROFILE']
+win_venv_scripts_folder_path = (r"{}\Envs\clointfusion\Scripts".format(os_path))
+linux_mac_venv_scripts_folder_path = r"\home\users"
+win_venv_python_path = os.path.join(win_venv_scripts_folder_path, "python.exe")
+linux_mac_venv_python_path = ""
+env_pip_path = os.path.join(win_venv_scripts_folder_path,"pip")
+
+if os.path.exists("{}\\Envs\\clointfusion\\done.txt".format(os_path)) == False:
+    subprocess.call("powershell Start-Process -Verb runAs cmd.exe -ArgumentList '/c pip install virtualenv virtualenvwrapper-win & mkvirtualenv -p 3 clointfusion & workon clointfusion & pip install --upgrade ClointFusion & deactivate & type nul > {}\\Envs\\clointfusion\\done.txt'".format(os_path))
+
+    while True:
+        if os.path.exists("{}\\Envs\\clointfusion\\done.txt".format(os_path)):
+            break
+
+if sys.executable.lower() == win_venv_python_path.lower():
+    current_environment = 1
+else:
+    activate_venv = r"{}\Envs\clointfusion\Scripts\activate_this.py".format(os_path)
+    exec(open(activate_venv).read(), {'__file__': activate_venv})
+
+
 
 list_of_required_packages = ["howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "gspread", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
 
@@ -24,18 +52,12 @@ def background(f):
     except Exception as ex:
         print("Task pushed to background = "+str(f) + str(ex))
 
-import os
-import subprocess 
-import platform
+
 import emoji
 from pandas.core.algorithms import mode
+
 os_name = platform.system()
 
-win_venv_scripts_folder_path = (r"C:\ClointFusion\Scripts")
-linux_mac_venv_scripts_folder_path = r"\home\users"
-win_venv_python_path = os.path.join(win_venv_scripts_folder_path, "python.exe")
-linux_mac_venv_python_path = ""
-env_pip_path = os.path.join(win_venv_scripts_folder_path,"pip")
 
 def show_emoji(strInput=""):
     """
@@ -54,16 +76,18 @@ def load_missing_python_packages():
     """
     Installs missing python packages
     """       
-    import sys
 
     subprocess.call("powershell Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser")
-
+    
     print("Welcome to ClointFusion, Made in India with " + show_emoji('red_heart'))
 
-    print("Checking the required dependencies for {} OS".format(os_name))
+    if current_environment:
+        print("Already inside ClointFusion Environment, type deactive in VSCode terminal to use Default Python Interpreter")
+    else:
+        print("Entering 'ClointFusion' Virtual Environment at {}".format(win_venv_python_path))
 
-    print("Entering 'ClointFusion' Virtual Environment at {}".format(sys.executable))
-    
+    print("Checking the required dependencies for {} OS".format(win_venv_python_path))
+        
     try:
         import PySimpleGUI
     except:
@@ -2938,4 +2962,3 @@ def browser_get_header_source_code(URL=""):
         print("Source code saved at "+ str(file_path))
     except Exception as ex:
         print("Error in browser_get_header_source_code")
-    
