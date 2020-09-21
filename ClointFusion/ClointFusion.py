@@ -14,11 +14,11 @@ win_venv_python_path = os.path.join(win_venv_scripts_folder_path, "python.exe")
 linux_mac_venv_python_path = ""
 env_pip_path = os.path.join(win_venv_scripts_folder_path,"pip")
 
-print("Hi {} !".format(os.getlogin()))
+print("Hi {} !".format(str(os.getlogin()).title()))
 
 if os.path.exists("{}\\Envs\\ClointFusion\\cf_venv_activated.txt".format(os_path)) == False:
     print("Its our recommendation to dedicate a separate Python virtual environment on your system for ClointFusion. Please wait, while we create one for you...")
-    subprocess.call("powershell Start-Process cmd.exe -ArgumentList '/c pip install virtualenv virtualenvwrapper-win & mkvirtualenv -p 3 ClointFusion & workon ClointFusion & pip install --upgrade ClointFusion & deactivate & type nul > {}\\Envs\\ClointFusion\\cf_venv_activated.txt'".format(os_path))
+    subprocess.call("powershell Start-Process cmd.exe -ArgumentList '/c pip install wheel virtualenv virtualenvwrapper-win & mkvirtualenv -p 3 ClointFusion & workon ClointFusion & pip install --upgrade ClointFusion & deactivate & type nul > {}\\Envs\\ClointFusion\\cf_venv_activated.txt'".format(os_path))
 
     while True:
         if os.path.exists("{}\\Envs\\ClointFusion\\cf_venv_activated.txt".format(os_path)):
