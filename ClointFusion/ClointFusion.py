@@ -1,7 +1,5 @@
-#!C:\ClointFusion\Scripts\python
-# ADD this line to settings.json in your Visual Studio Code >> "terminal.integrated.shellArgs.windows": ["-ExecutionPolicy", "Bypass"],
 # Project Name: ClointFusion
-# Project Description: A Python based RPA Automation Framework for Desktop GUI,Citrix, Web and basic excel operations.
+# Project Description: A Python based RPA Automation Framework for Desktop GUI, Citrix, Web and basic Excel operations.
 import subprocess
 import os
 import time
@@ -10,26 +8,27 @@ import platform
 
 current_environment = 0
 os_path=os.environ['USERPROFILE']
-win_venv_scripts_folder_path = (r"{}\Envs\clointfusion\Scripts".format(os_path))
+win_venv_scripts_folder_path = (r"{}\Envs\ClointFusion\Scripts".format(os_path))
 linux_mac_venv_scripts_folder_path = r"\home\users"
 win_venv_python_path = os.path.join(win_venv_scripts_folder_path, "python.exe")
 linux_mac_venv_python_path = ""
 env_pip_path = os.path.join(win_venv_scripts_folder_path,"pip")
 
-if os.path.exists("{}\\Envs\\clointfusion\\done.txt".format(os_path)) == False:
-    subprocess.call("powershell Start-Process -Verb runAs cmd.exe -ArgumentList '/c pip install virtualenv virtualenvwrapper-win & mkvirtualenv -p 3 clointfusion & workon clointfusion & pip install --upgrade ClointFusion & deactivate & type nul > {}\\Envs\\clointfusion\\done.txt'".format(os_path))
+print("Hi {} !".format(os.getlogin()))
+
+if os.path.exists("{}\\Envs\\ClointFusion\\cf_venv_activated.txt".format(os_path)) == False:
+    print("Its our recommendation to dedicate a separate Python virtual environment on your system for ClointFusion. Please wait, while we create one for you...")
+    subprocess.call("powershell Start-Process cmd.exe -ArgumentList '/c pip install virtualenv virtualenvwrapper-win & mkvirtualenv -p 3 ClointFusion & workon ClointFusion & pip install --upgrade ClointFusion & deactivate & type nul > {}\\Envs\\ClointFusion\\cf_venv_activated.txt'".format(os_path))
 
     while True:
-        if os.path.exists("{}\\Envs\\clointfusion\\done.txt".format(os_path)):
+        if os.path.exists("{}\\Envs\\ClointFusion\\cf_venv_activated.txt".format(os_path)):
             break
 
 if sys.executable.lower() == win_venv_python_path.lower():
     current_environment = 1
 else:
-    activate_venv = r"{}\Envs\clointfusion\Scripts\activate_this.py".format(os_path)
+    activate_venv = r"{}\Envs\ClointFusion\Scripts\activate_this.py".format(os_path)
     exec(open(activate_venv).read(), {'__file__': activate_venv})
-
-
 
 list_of_required_packages = ["howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "gspread", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
 
@@ -52,12 +51,10 @@ def background(f):
     except Exception as ex:
         print("Task pushed to background = "+str(f) + str(ex))
 
-
 import emoji
 from pandas.core.algorithms import mode
 
 os_name = platform.system()
-
 
 def show_emoji(strInput=""):
     """
@@ -82,7 +79,7 @@ def load_missing_python_packages():
     print("Welcome to ClointFusion, Made in India with " + show_emoji('red_heart'))
 
     if current_environment:
-        print("Already inside ClointFusion Environment, type deactive in VSCode terminal to use Default Python Interpreter")
+        print("Already inside ClointFusion Virtual Environment, type deactive in VSCode terminal to use Default Python Interpreter")
     else:
         print("Entering 'ClointFusion' Virtual Environment at {}".format(win_venv_python_path))
 
@@ -181,11 +178,7 @@ import clipboard
 import re
 from openpyxl import load_workbook
 from openpyxl.styles import Font
-from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
-from O365.utils.token import FileSystemTokenBackend
-from O365 import Account
-from google_auth_oauthlib.flow import InstalledAppFlow
 import plotly.express as px
 from kaleido.scopes.plotly import PlotlyScope
 import plotly.graph_objects as go
@@ -217,12 +210,11 @@ error_screen_shots_path = ""
 folderPathToStatusLogFile = ""
 current_working_dir = os.path.dirname(os.path.realpath(__file__)) 
 Cloint_PNG_Logo_Path = ""
-
+bot_name = ""
 excel_operations_excel_file_1 = ""
 
 print("ClointFusion module running at " + str(current_working_dir) + " " + show_emoji())
 
-bot_name = ""
 #Web Browser Automation Global Variables
 service = ""
 driver = ""
@@ -631,9 +623,8 @@ def _set_bot_name(strBotName=""):
     if not strBotName: #if user has not given bot_name
         bot_name = current_working_dir[current_working_dir.rindex("\\") + 1 : ] #Assumption that user has given proper folder name and so taking it as BOT name
     else:
+        strBotName = string_remove_special_characters(strBotName) 
         bot_name = strBotName
-
-    strBotName = string_remove_special_characters(strBotName)    
 
     c_drive_base_dir = c_drive_base_dir + "_" + bot_name
     
@@ -2961,4 +2952,4 @@ def browser_get_header_source_code(URL=""):
             
         print("Source code saved at "+ str(file_path))
     except Exception as ex:
-        print("Error in browser_get_header_source_code")
+        print("Error in browser_get_header_source_code="+str(ex))
