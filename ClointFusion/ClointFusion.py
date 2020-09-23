@@ -8,27 +8,58 @@ import platform
 
 current_environment = 0
 os_path=os.environ['USERPROFILE']
-win_venv_scripts_folder_path = (r"{}\Envs\ClointFusion\Scripts".format(os_path))
+win_venv_scripts_folder_path = (r"{}\ClointFusion\Scripts".format(os_path))
 linux_mac_venv_scripts_folder_path = r"\home\users"
 win_venv_python_path = os.path.join(win_venv_scripts_folder_path, "python.exe")
 linux_mac_venv_python_path = ""
 env_pip_path = os.path.join(win_venv_scripts_folder_path,"pip")
 
-print("Hi {} !".format(str(os.getlogin()).title()))
+print("Hi {} !".format(os.getlogin()))
 
-if os.path.exists("{}\\Envs\\ClointFusion\\cf_venv_activated.txt".format(os_path)) == False:
+if os.path.exists(r"{}\ClointFusion\cf_venv_activated.txt".format(os_path)) == False:
     print("Its our recommendation to dedicate a separate Python virtual environment on your system for ClointFusion. Please wait, while we create one for you...")
-    subprocess.call("powershell Start-Process cmd.exe -ArgumentList '/c pip install wheel virtualenv virtualenvwrapper-win & mkvirtualenv -p 3 ClointFusion & workon ClointFusion & pip install --upgrade ClointFusion & deactivate & type nul > {}\\Envs\\ClointFusion\\cf_venv_activated.txt'".format(os_path))
+    subprocess.call(r"cmd.exe -ArgumentList /c python -m venv {}\ClointFusion & {}\ClointFusion\Scripts\activate & python.exe -m pip install -U pip & python -m pip install -U ClointFusion & deactivate & type nul > {}\ClointFusion\cf_venv_activated.txt".format(os_path,os_path,os_path))
 
     while True:
-        if os.path.exists("{}\\Envs\\ClointFusion\\cf_venv_activated.txt".format(os_path)):
+        if os.path.exists(r"{}\ClointFusion\cf_venv_activated.txt".format(os_path)):
             break
 
-if sys.executable.lower() == win_venv_python_path.lower():
-    current_environment = 1
+if os.path.exists("{}\ClointFusion\Scripts\activate_this.py".format(os_path)) == False :
+    with open(r"{}\ClointFusion\Scripts\activate_this.py".format(os_path), 'w') as f:
+        activate_this_py =""" 
+try:
+    __file__
+except NameError:
+    raise AssertionError(
+        "You must run this like execfile('path/to/activate_this.py', dict(__file__='path/to/activate_this.py'))")
+import sys
+import os
+
+old_os_path = os.environ.get('PATH', '')
+os.environ['PATH'] = os.path.dirname(os.path.abspath(__file__)) + os.pathsep + old_os_path
+base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if sys.platform == 'win32':
+    site_packages = os.path.join(base, 'Lib', 'site-packages')
 else:
-    activate_venv = r"{}\Envs\ClointFusion\Scripts\activate_this.py".format(os_path)
-    exec(open(activate_venv).read(), {'__file__': activate_venv})
+    site_packages = os.path.join(base, 'lib', 'python%s' % sys.version[:3], 'site-packages')
+prev_sys_path = list(sys.path)
+import site
+site.addsitedir(site_packages)
+sys.real_prefix = sys.prefix
+sys.prefix = base
+# Move the added items to the front of the path:
+new_sys_path = []
+for item in list(sys.path):
+    if item not in prev_sys_path:
+        new_sys_path.append(item)
+        sys.path.remove(item)
+sys.path[:0] = new_sys_path """
+        f.write(activate_this_py)
+
+subprocess.call(r"cmd.exe -ArgumentList /c {}\ClointFusion\Scripts\activate".format(os_path))
+
+activate_venv = r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)
+exec(open(activate_venv).read(), {'__file__': activate_venv})
 
 list_of_required_packages = ["howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "gspread", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
 
@@ -78,10 +109,7 @@ def load_missing_python_packages():
     
     print("Welcome to ClointFusion, Made in India with " + show_emoji('red_heart'))
 
-    if current_environment:
-        print("Already inside ClointFusion Virtual Environment, type deactive in VSCode terminal to use Default Python Interpreter")
-    else:
-        print("Entering 'ClointFusion' Virtual Environment at {}".format(win_venv_python_path))
+    print("Entering 'ClointFusion' Virtual Environment at {}".format(win_venv_python_path))
 
     print("Checking the required dependencies for {} OS".format(win_venv_python_path))
         
@@ -92,8 +120,7 @@ def load_missing_python_packages():
 
     #install missing packages
     try:
-        
-        reqs = subprocess.check_output([sys.executable, '-m', 'pip', 'list'])
+        reqs = subprocess.check_output([win_venv_python_path, '-m', 'pip', 'list'])
         installed_packages = [r.decode().split('==')[0] for r in reqs.split()]
 
         missing_packages = ' '.join(list(set(list_of_required_packages)-set(installed_packages)))
@@ -104,7 +131,6 @@ def load_missing_python_packages():
             os.system("{} -m pip install --upgrade pip".format(sys.executable))
             
             os.system("{} install --upgrade {}".format(env_pip_path,missing_packages)) 
-            print("Missing Dependencies Installed")
         else:
             print("All required packages are already available " + show_emoji('smile'))
 
