@@ -3,38 +3,30 @@
 <img src="https://1.bp.blogspot.com/-bsjlUEdJ35M/X1Wqcpfu9lI/AAAAAAAAAQw/8VKgirD4Uvcgdse3UiAYM1Ci9HbKSGtvwCLcBGAsYHQ/s122/Splash.png">
 
 # Description: 
-Cloint LLC's Python based backend functions for RPA (Automation)
+Python based functions for RPA (Automation)
 
 # Installation
+# Currently we are supporting only Windows OS
+## Please install latest Python with 64 bit
+## All the dependent packages would be installed automatically in a separate virtual environment
+pip install ClointFusion
 
-# Recommended Approach: 
-## 1. Install Virtual Environment builder for Python. Execute in your command prompt / terminal:
-
-## Windows Users:
-pip install virtualenv virtualenvwrapper-win
-         
-## 2. Lets create a Virtual Environemnt for ClointFusion. Execute in your command prompt / terminal:
-mkvirtualenv c:\\ClointFusion -p python3
-
-## 3. Install / Upgarde ClointFusion
-pip install --upgrade ClointFusion
-
-## 4. Usage: Open a new Python file (preferably in Visual Studio Code) and type:
+## Usage: Open a new Python file and type:
 ## import ClointFusion as cf
 
-#Now, get all mouse related functions, by typing below code and hit CTRL+Space (intellisense)
+#Get all mouse related functions, by typing below code and hit CTRL+Space (intellisense in your favourite IDE)
 ## cf.mouse_
-#Get all window operation based functions :
+#window operations :
 ## cf.window_
-#Get all folder related functions :
+#folder operations :
 ## cf.folder_
-#Get all excel related functions :
+#excel operations :
 ## cf.excel_
-#Get all keyboard related functions :
+#keyboard related functions :
 ## cf.key_
-#Get all screenscraping related functions :
+#screenscraping related functions :
 ## cf.scrape_
-#Get all string related functions :
+#string operations :
 ## cf.string_
 
 ## Anytime, if you are not getting how to use the function, just call empty function (without parameters) and GUI would pop asking you for required parameters.
@@ -42,7 +34,7 @@ pip install --upgrade ClointFusion
 ## cf.get_long_lat()
 
 # We love your contribution
-Please submit a pull request
+Please submit a GitHub pull request
 
 # Contact us:
 Drop a mail to automation@cloint.com

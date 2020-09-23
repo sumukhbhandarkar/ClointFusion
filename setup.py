@@ -10,16 +10,16 @@ with open(path.join(this_directory, "README.md"), "r") as fh:
 setuptools.setup(
     name='ClointFusion',
     packages=['ClointFusion'],
-    version='0.0.14',
-    description="Cloint LLC's Python based backend functions for RPA (Automation)",
+    version='0.0.15',
+    description="Cloint India Pvt. Ltd - Python3 functions for RPA (Automation)",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author='Cloint LLC',
+    author='Cloint India Pvt. Ltd',
     author_email='automation@cloint.com',
     url='https://github.com/ClointFusion/ClointFusion',
-    keywords=['ClointFusion','RPA','Python','Automation'],
+    keywords=['ClointFusion','RPA','Python','Automation','BOT'],
       install_requires=[            
-          "howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "gspread", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"
+          "howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"
       ],
   classifiers=[
     'Development Status :: 3 - Alpha',      

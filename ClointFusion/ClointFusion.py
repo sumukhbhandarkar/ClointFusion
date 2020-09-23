@@ -14,17 +14,17 @@ win_venv_python_path = os.path.join(win_venv_scripts_folder_path, "python.exe")
 linux_mac_venv_python_path = ""
 env_pip_path = os.path.join(win_venv_scripts_folder_path,"pip")
 
-print("Hi {} !".format(os.getlogin()))
+# print("Hi {} !".format(os.getlogin()))
 
 if os.path.exists(r"{}\ClointFusion\cf_venv_activated.txt".format(os_path)) == False:
-    print("Its our recommendation to dedicate a separate Python virtual environment on your system for ClointFusion. Please wait, while we create one for you...")
-    subprocess.call(r"cmd.exe -ArgumentList /c python -m venv {}\ClointFusion & {}\ClointFusion\Scripts\activate & python.exe -m pip install -U pip & python -m pip install -U ClointFusion & deactivate & type nul > {}\ClointFusion\cf_venv_activated.txt".format(os_path,os_path,os_path))
+    # print("Its our recommendation to dedicate a separate Python virtual environment on your system for ClointFusion. Please wait, while we create one for you...")
+    subprocess.call(r"cmd.exe -ArgumentList /c python -m venv {}\ClointFusion & {}\ClointFusion\Scripts\activate & python.exe -m pip install -U pip & python -m pip install -U wheel & python -m pip install -U ClointFusion & deactivate & type nul > {}\ClointFusion\cf_venv_activated.txt".format(os_path,os_path,os_path))
 
     while True:
         if os.path.exists(r"{}\ClointFusion\cf_venv_activated.txt".format(os_path)):
             break
 
-if os.path.exists("{}\ClointFusion\Scripts\activate_this.py".format(os_path)) == False :
+if os.path.exists(r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)) == False :
     with open(r"{}\ClointFusion\Scripts\activate_this.py".format(os_path), 'w') as f:
         activate_this_py =""" 
 try:
@@ -61,7 +61,7 @@ subprocess.call(r"cmd.exe -ArgumentList /c {}\ClointFusion\Scripts\activate".for
 activate_venv = r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)
 exec(open(activate_venv).read(), {'__file__': activate_venv})
 
-list_of_required_packages = ["howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "gspread", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
+list_of_required_packages = ["howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
 
 #decorator to push a function to background using asyncio
 def background(f):
@@ -109,9 +109,9 @@ def load_missing_python_packages():
     
     print("Welcome to ClointFusion, Made in India with " + show_emoji('red_heart'))
 
-    print("Entering 'ClointFusion' Virtual Environment at {}".format(win_venv_python_path))
+    # print("Entering 'ClointFusion' Virtual Environment at {}".format(win_venv_python_path))
 
-    print("Checking the required dependencies for {} OS".format(win_venv_python_path))
+    # print("Checking the required dependencies for {} OS".format(os_name))
         
     try:
         import PySimpleGUI
@@ -132,7 +132,8 @@ def load_missing_python_packages():
             
             os.system("{} install --upgrade {}".format(env_pip_path,missing_packages)) 
         else:
-            print("All required packages are already available " + show_emoji('smile'))
+            pass
+            # print("All required packages are already available " + show_emoji('smile'))
 
     except Exception as ex:
         print("Error in load_missing_python_packages="+str(ex))
@@ -145,7 +146,7 @@ def update_all_packages_in_cloint_fusion_virtual_environment():
     """
     try:
         updating_required_packages= ' '.join(list(set(list_of_required_packages)))
-        print("Updating existing packages in 'ClointFusion' ") 
+        # print("Updating existing packages in 'ClointFusion' ") 
         _ = subprocess.run("{} install --upgrade {}".format(env_pip_path,updating_required_packages),capture_output=True)
     except Exception as ex:
         print("Error in update_all_packages_cloint_fusion_virtual_environment="+str(ex))
@@ -174,7 +175,7 @@ from functools import lru_cache
 import threading
 from threading import Timer
 import traceback
-import gspread
+
 import socket
 from cv2 import cv2
 import base64
@@ -204,7 +205,7 @@ import clipboard
 import re
 from openpyxl import load_workbook
 from openpyxl.styles import Font
-from pydrive2.drive import GoogleDrive
+
 import plotly.express as px
 from kaleido.scopes.plotly import PlotlyScope
 import plotly.graph_objects as go
@@ -239,7 +240,7 @@ Cloint_PNG_Logo_Path = ""
 bot_name = ""
 excel_operations_excel_file_1 = ""
 
-print("ClointFusion module running at " + str(current_working_dir) + " " + show_emoji())
+# print("ClointFusion module running at " + str(current_working_dir) + " " + show_emoji())
 
 #Web Browser Automation Global Variables
 service = ""
