@@ -10,8 +10,8 @@ with open(path.join(this_directory, "README.md"), "r") as fh:
 setuptools.setup(
     name='ClointFusion',
     packages=['ClointFusion'],
-    version='0.0.15',
-    description="Cloint India Pvt. Ltd - Python3 functions for RPA (Automation)",
+    version='0.0.16',
+    description="Python based functions for RPA (Automation)",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author='Cloint India Pvt. Ltd',

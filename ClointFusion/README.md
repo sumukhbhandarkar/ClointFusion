@@ -3,7 +3,7 @@
 <img src="https://1.bp.blogspot.com/-bsjlUEdJ35M/X1Wqcpfu9lI/AAAAAAAAAQw/8VKgirD4Uvcgdse3UiAYM1Ci9HbKSGtvwCLcBGAsYHQ/s122/Splash.png">
 
 # Description: 
-Python based functions for RPA (Automation)
+Cloint India Pvt. Ltd - Python3 functions for RPA (Automation)
 
 # Installation
 # Currently we are supporting only Windows OS
