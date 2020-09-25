@@ -141,3 +141,4 @@ cython_debug/
 .vscode/settings.json
 .gitignore
 *settings.json
+.vscode/settings.json

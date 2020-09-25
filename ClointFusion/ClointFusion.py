@@ -61,7 +61,7 @@ subprocess.call(r"cmd.exe -ArgumentList /c {}\ClointFusion\Scripts\activate".for
 activate_venv = r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)
 exec(open(activate_venv).read(), {'__file__': activate_venv})
 
-list_of_required_packages = ["howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
+list_of_required_packages = ["wheel","howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
 
 #decorator to push a function to background using asyncio
 def background(f):
@@ -100,6 +100,7 @@ def show_emoji(strInput=""):
     else:
         return(emoji.emojize(":{}:".format(str(strInput).lower()),use_aliases=True,variant="emoji_type"))
 
+@background
 def load_missing_python_packages():
     """
     Installs missing python packages
@@ -144,12 +145,34 @@ def update_all_packages_in_cloint_fusion_virtual_environment():
     """
     Function to UPGRADE all packages related to ClointFusion. This function runs in background and is silent.
     """
-    try:
-        updating_required_packages= ' '.join(list(set(list_of_required_packages)))
-        # print("Updating existing packages in 'ClointFusion' ") 
-        _ = subprocess.run("{} install --upgrade {}".format(env_pip_path,updating_required_packages),capture_output=True)
-    except Exception as ex:
-        print("Error in update_all_packages_cloint_fusion_virtual_environment="+str(ex))
+    from datetime import datetime
+    UPDATE_NOW = False
+    last_updated_date_file = r"{}\ClointFusion\Scripts\last_updated_on_date.txt".format(os_path)
+    last_updated_on_date = ""
+
+    try:    
+        with open(last_updated_date_file, 'r') as f:
+            last_updated_on_date = str(f.read())
+    except:#First time logic
+        with open(last_updated_date_file, 'w') as f:
+            last_updated_on_date = str(datetime.today().strftime('%d'))
+            f.write(last_updated_on_date)
+            UPDATE_NOW = True
+
+    today_date = str(datetime.today().strftime('%d'))
+    if last_updated_on_date != today_date:
+        UPDATE_NOW = True
+
+    if UPDATE_NOW:
+        try:
+            updating_required_packages= ' '.join(list(set(list_of_required_packages)))
+            # print("Updating existing packages in 'ClointFusion' ") 
+            _ = subprocess.run("{} install --upgrade {}".format(env_pip_path,updating_required_packages),capture_output=True)
+            with open(last_updated_date_file, 'w') as f:
+                f.write(str(today_date))
+
+        except Exception as ex:
+            print("Error in update_all_packages_cloint_fusion_virtual_environment="+str(ex))
 
 load_missing_python_packages()
 update_all_packages_in_cloint_fusion_virtual_environment()
