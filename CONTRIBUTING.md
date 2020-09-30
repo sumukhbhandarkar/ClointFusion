@@ -29,11 +29,18 @@ The best way to send feedback is to file an issue at https://github.com/ClointFu
 
 If you are proposing a feature:
 
-Explain in detail how it would work.
-Keep the scope as narrow as possible, to make it easier to implement.
-Remember that this is a volunteer-driven project, and that contributions are welcome :)
-Get Started!
+1. Explain in detail how it would work.
+2. Keep the scope as narrow as possible, to make it easier to implement.
+3. Remember that this is a volunteer-driven project, and that contributions are welcome :)
+
+# Get Started!
 Ready to contribute? Here's how to set up ClointFusion for local development.
+1. Fork the ClointFusion repo on GitHub.
+2. Clone your fork locally
+3. Install your local copy into a virtual environment
+4. Create a branch for local development
+5. When you're done making changes, commit your changes and push your branch to GitHub
+6. Submit a pull request through the GitHub website.
 
 ## Currently we are supporting only Windows OS
 
@@ -52,3 +59,12 @@ cf.mouse_
 #window operations :
 
 cf.window_
+
+## Pull Request Guidelines
+Before you submit a pull request, check that it meets these guidelines:
+
+1. The pull request should include tests.
+2. If the pull request adds functionality, the docs should be updated. Put your new functionality into a function with a docstring, and add the feature to the list in README.md.
+3. The pull request should work for Python 3.8 and for PyPi.
+
+# Reachout to us: automation@cloint.com
