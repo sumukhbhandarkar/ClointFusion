@@ -6,60 +6,61 @@ import time
 import sys
 import platform
 
+os_name = str(platform.system()).lower()
+
 current_environment = 0
-os_path=os.environ['USERPROFILE']
-win_venv_scripts_folder_path = (r"{}\ClointFusion\Scripts".format(os_path))
-linux_mac_venv_scripts_folder_path = r"\home\users"
-win_venv_python_path = os.path.join(win_venv_scripts_folder_path, "python.exe")
-linux_mac_venv_python_path = ""
-env_pip_path = os.path.join(win_venv_scripts_folder_path,"pip")
 
-# print("Hi {} !".format(os.getlogin()))
+if os_name == 'windows':
+    os_path=os.environ['USERPROFILE']
+    win_venv_scripts_folder_path = (r"{}\ClointFusion\Scripts".format(os_path))
+    linux_mac_venv_scripts_folder_path = r"\home\users"
+    win_venv_python_path = os.path.join(win_venv_scripts_folder_path, "python.exe")
+    linux_mac_venv_python_path = ""
+    env_pip_path = os.path.join(win_venv_scripts_folder_path,"pip")
 
-if os.path.exists(r"{}\ClointFusion\cf_venv_activated.txt".format(os_path)) == False:
-    # print("Its our recommendation to dedicate a separate Python virtual environment on your system for ClointFusion. Please wait, while we create one for you...")
-    subprocess.call(r"cmd.exe -ArgumentList /c python -m venv {}\ClointFusion & {}\ClointFusion\Scripts\activate & python.exe -m pip install -U pip & python -m pip install -U wheel & python -m pip install -U ClointFusion & deactivate & type nul > {}\ClointFusion\cf_venv_activated.txt".format(os_path,os_path,os_path))
+    if os.path.exists(r"{}\ClointFusion\cf_venv_activated.txt".format(os_path)) == False:
+        subprocess.call(r"cmd.exe -ArgumentList /c python -m venv {}\ClointFusion & {}\ClointFusion\Scripts\activate & python.exe -m pip install -U pip & python -m pip install -U wheel & python -m pip install -U ClointFusion & deactivate & type nul > {}\ClointFusion\cf_venv_activated.txt".format(os_path,os_path,os_path))
 
-    while True:
-        if os.path.exists(r"{}\ClointFusion\cf_venv_activated.txt".format(os_path)):
-            break
+        while True:
+            if os.path.exists(r"{}\ClointFusion\cf_venv_activated.txt".format(os_path)):
+                break
 
-if os.path.exists(r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)) == False :
-    with open(r"{}\ClointFusion\Scripts\activate_this.py".format(os_path), 'w') as f:
-        activate_this_py =""" 
-try:
-    __file__
-except NameError:
-    raise AssertionError(
-        "You must run this like execfile('path/to/activate_this.py', dict(__file__='path/to/activate_this.py'))")
-import sys
-import os
+    if os.path.exists(r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)) == False :
+        with open(r"{}\ClointFusion\Scripts\activate_this.py".format(os_path), 'w') as f:
+            activate_this_py =""" 
+    try:
+        __file__
+    except NameError:
+        raise AssertionError(
+            "You must run this like execfile('path/to/activate_this.py', dict(__file__='path/to/activate_this.py'))")
+    import sys
+    import os
 
-old_os_path = os.environ.get('PATH', '')
-os.environ['PATH'] = os.path.dirname(os.path.abspath(__file__)) + os.pathsep + old_os_path
-base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if sys.platform == 'win32':
-    site_packages = os.path.join(base, 'Lib', 'site-packages')
-else:
-    site_packages = os.path.join(base, 'lib', 'python%s' % sys.version[:3], 'site-packages')
-prev_sys_path = list(sys.path)
-import site
-site.addsitedir(site_packages)
-sys.real_prefix = sys.prefix
-sys.prefix = base
-# Move the added items to the front of the path:
-new_sys_path = []
-for item in list(sys.path):
-    if item not in prev_sys_path:
-        new_sys_path.append(item)
-        sys.path.remove(item)
-sys.path[:0] = new_sys_path """
-        f.write(activate_this_py)
+    old_os_path = os.environ.get('PATH', '')
+    os.environ['PATH'] = os.path.dirname(os.path.abspath(__file__)) + os.pathsep + old_os_path
+    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if sys.platform == 'win32':
+        site_packages = os.path.join(base, 'Lib', 'site-packages')
+    else:
+        site_packages = os.path.join(base, 'lib', 'python%s' % sys.version[:3], 'site-packages')
+    prev_sys_path = list(sys.path)
+    import site
+    site.addsitedir(site_packages)
+    sys.real_prefix = sys.prefix
+    sys.prefix = base
+    # Move the added items to the front of the path:
+    new_sys_path = []
+    for item in list(sys.path):
+        if item not in prev_sys_path:
+            new_sys_path.append(item)
+            sys.path.remove(item)
+    sys.path[:0] = new_sys_path """
+            f.write(activate_this_py)
 
-subprocess.call(r"cmd.exe -ArgumentList /c {}\ClointFusion\Scripts\activate".format(os_path))
+    subprocess.call(r"cmd.exe -ArgumentList /c {}\ClointFusion\Scripts\activate".format(os_path))
 
-activate_venv = r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)
-exec(open(activate_venv).read(), {'__file__': activate_venv})
+    activate_venv = r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)
+    exec(open(activate_venv).read(), {'__file__': activate_venv})
 
 list_of_required_packages = ["wheel","howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
 
@@ -84,8 +85,6 @@ def background(f):
 
 import emoji
 from pandas.core.algorithms import mode
-
-os_name = platform.system()
 
 def show_emoji(strInput=""):
     """
@@ -246,11 +245,12 @@ import matplotlib.pyplot as plt
 from urllib.request import urlopen 
 
 sg.theme('Dark') 
+c_drive_base_dir = ""
 
-if 'Windows' in os_name:
+if os_name == 'windows':
     c_drive_base_dir = r"C:\ClointFusion\My_Bot"  
-else: # to be tested in Linux Environemnt
-    c_drive_base_dir = r"\home\ClointFusion\My_Bot"
+# else: # to be tested in Linux Environemnt
+#     c_drive_base_dir = r"\home\ClointFusion\My_Bot"
 
 img_path =  "" 
 batch_file_path = ""

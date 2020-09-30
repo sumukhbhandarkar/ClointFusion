@@ -1,4 +1,3 @@
-# Below packages are automatically installed when you import ClointFusion
 PyAutoGUI
 PyGetWindow
 PySimpleGUI
@@ -24,3 +23,5 @@ selenium
 texthero
 xlrd
 zipcodes
+sphinx
+sphinx_rtd_theme
