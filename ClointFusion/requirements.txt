@@ -1,3 +1,4 @@
+wheel
 PyAutoGUI
 PyGetWindow
 PySimpleGUI

@@ -10,7 +10,7 @@ with open(path.join(this_directory, "README.md"), "r") as fh:
 setuptools.setup(
     name='ClointFusion',
     packages=['ClointFusion'],
-    version='0.0.17',
+    version='0.0.18',
     description="Python based functions for RPA (Automation)",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -19,13 +19,13 @@ setuptools.setup(
     url='https://github.com/ClointFusion/ClointFusion',
     keywords=['ClointFusion','RPA','Python','Automation','BOT'],
       install_requires=[            
-          "wheel"
+          
       ],
   classifiers=[
     'Development Status :: 3 - Alpha',      
     'Intended Audience :: Developers',      
     'Topic :: Software Development :: Build Tools',
-    'License :: OSI Approved :: BSD License',  
+    'License :: OSI Approved :: BSD-4-Clause',  
     'Natural Language :: English',
   ],
   python_requires='>=3.8',
