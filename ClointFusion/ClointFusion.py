@@ -5,17 +5,30 @@ import os
 import time
 import sys
 import platform
-
-os_name = str(platform.system()).lower()
+import urllib.request
 
 current_environment = 0
+
+
+os_name = str(platform.system()).lower()
+c_drive_base_dir = ""
+
+if os_name == 'windows':
+    c_drive_base_dir = r"C:\ClointFusion\My_Bot"  
+
+current_working_dir = os.path.dirname(os.path.realpath(__file__)) #get cwd
+cf_icon_file_path = os.path.join((current_working_dir),"CF_ICON.ico")
+
+bot_name = ""
+enable_semi_automatic_mode = False
+
 
 if os_name == 'windows':
     os_path=os.environ['USERPROFILE']
     win_venv_scripts_folder_path = (r"{}\ClointFusion\Scripts".format(os_path))
-    linux_mac_venv_scripts_folder_path = r"\home\users"
+    
     win_venv_python_path = os.path.join(win_venv_scripts_folder_path, "python.exe")
-    linux_mac_venv_python_path = ""
+    
     env_pip_path = os.path.join(win_venv_scripts_folder_path,"pip")
 
     if os.path.exists(r"{}\ClointFusion\cf_venv_activated.txt".format(os_path)) == False:
@@ -62,7 +75,7 @@ if os_name == 'windows':
     activate_venv = r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)
     exec(open(activate_venv).read(), {'__file__': activate_venv})
 
-list_of_required_packages = ["wheel","howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
+list_of_required_packages = ["wheel","urllib3","beautifulsoup4","pdfplumber","watchdog","wordcloud","scipy","numpy","howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
 
 #decorator to push a function to background using asyncio
 def background(f):
@@ -83,8 +96,17 @@ def background(f):
     except Exception as ex:
         print("Task pushed to background = "+str(f) + str(ex))
 
+@background
+def _download_cloint_ico():    
+    """
+    Internal function to download ClointFusion ICON from GitHub
+    """
+    if not os.path.exists(cf_icon_file_path):
+        urllib.request.urlretrieve('https://raw.githubusercontent.com/ClointFusion/ClointFusion/master/Cloint-ICON.ico',cf_icon_file_path)
+
 import emoji
 from pandas.core.algorithms import mode
+from xlrd.formula import colname
 
 def show_emoji(strInput=""):
     """
@@ -93,6 +115,7 @@ def show_emoji(strInput=""):
     Usage: 
     print(show_emoji('thumbsup'))
     print("OK",show_emoji('thumbsup'))
+    Default: thumbsup
     """
     if not strInput:
         return(emoji.emojize(":{}:".format(str('thumbsup').lower()),use_aliases=True,variant="emoji_type"))
@@ -107,11 +130,6 @@ def load_missing_python_packages():
 
     subprocess.call("powershell Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser")
     
-    print("Welcome to ClointFusion, Made in India with " + show_emoji('red_heart'))
-
-    # print("Entering 'ClointFusion' Virtual Environment at {}".format(win_venv_python_path))
-
-    # print("Checking the required dependencies for {} OS".format(os_name))
         
     try:
         import PySimpleGUI
@@ -131,12 +149,39 @@ def load_missing_python_packages():
             os.system("{} -m pip install --upgrade pip".format(sys.executable))
             
             os.system("{} install --upgrade {}".format(env_pip_path,missing_packages)) 
-        else:
-            pass
-            # print("All required packages are already available " + show_emoji('smile'))
+
 
     except Exception as ex:
         print("Error in load_missing_python_packages="+str(ex))
+
+def is_execution_required_today(file_name,save_todays_date=False):
+    """
+    Function which ensutres that a another function which calls this function is executed only once per day.
+    Returns boolean True/False if another function to be executed today or not
+    """
+    from datetime import datetime
+    last_updated_date_file = r"{}\ClointFusion\Scripts\{}.txt".format(os_path,file_name)
+    EXECUTE_TODAY = False
+    last_updated_on_date = ""
+
+    try:    
+        with open(last_updated_date_file, 'r') as f:
+            last_updated_on_date = str(f.read())
+            save_todays_date = False
+    except:
+        save_todays_date = True
+
+    if save_todays_date:
+        with open(last_updated_date_file, 'w') as f:
+            last_updated_on_date = datetime.today().strftime('%d')
+            f.write(str(last_updated_on_date))
+            EXECUTE_TODAY = True
+
+    today_date = str(datetime.today().strftime('%d'))
+    if last_updated_on_date != today_date:
+        EXECUTE_TODAY = True
+
+    return EXECUTE_TODAY
 
 #upgrade existing packages
 @background
@@ -144,34 +189,213 @@ def update_all_packages_in_cloint_fusion_virtual_environment():
     """
     Function to UPGRADE all packages related to ClointFusion. This function runs in background and is silent.
     """
-    from datetime import datetime
-    UPDATE_NOW = False
-    last_updated_date_file = r"{}\ClointFusion\Scripts\last_updated_on_date.txt".format(os_path)
-    last_updated_on_date = ""
+    EXECUTE_TODAY = is_execution_required_today('update_all_packages_in_cloint_fusion_virtual_environment')
 
-    try:    
-        with open(last_updated_date_file, 'r') as f:
-            last_updated_on_date = str(f.read())
-    except:#First time logic
-        with open(last_updated_date_file, 'w') as f:
-            last_updated_on_date = str(datetime.today().strftime('%d'))
-            f.write(last_updated_on_date)
-            UPDATE_NOW = True
-
-    today_date = str(datetime.today().strftime('%d'))
-    if last_updated_on_date != today_date:
-        UPDATE_NOW = True
-
-    if UPDATE_NOW:
+    if EXECUTE_TODAY:
         try:
             updating_required_packages= ' '.join(list(set(list_of_required_packages)))
-            # print("Updating existing packages in 'ClointFusion' ") 
+            
             _ = subprocess.run("{} install --upgrade {}".format(env_pip_path,updating_required_packages),capture_output=True)
-            with open(last_updated_date_file, 'w') as f:
-                f.write(str(today_date))
+            is_execution_required_today('update_all_packages_in_cloint_fusion_virtual_environment',True)
 
         except Exception as ex:
             print("Error in update_all_packages_cloint_fusion_virtual_environment="+str(ex))
+
+def _welcome_to_clointfusion():
+    """
+    Internal Function to display welcome message & push a notification to ClointFusion Slack
+    """
+    welcome_msg = "Welcome to ClointFusion, Made in India with " + show_emoji('red_heart')
+    print(welcome_msg)
+
+
+def string_remove_special_characters(inputStr=""):
+    """
+    Removes all the special character.
+
+    Parameters:
+        inputStr  (str) : string for removing all the special character in it.
+
+    Returns :
+        outputStr (str) : returns the alphanumeric string.
+    """
+
+    if inputStr:
+        outputStr = ''.join(e for e in inputStr if e.isalnum())
+        return outputStr  
+
+def _set_bot_name(strBotName=""):
+    """
+    Internal function
+    If a botname is given, it will be used in the log file and in Task Scheduler
+    we can also access the botname variable globally.
+
+    Parameters :
+        strBotName (str) : Name of the bot
+    """
+    global c_drive_base_dir
+    global bot_name
+
+    if not strBotName: #if user has not given bot_name
+        bot_name = current_working_dir[current_working_dir.rindex("\\") + 1 : ] #Assumption that user has given proper folder name and so taking it as BOT name
+
+    else:
+        strBotName = string_remove_special_characters(strBotName)    
+        bot_name = strBotName
+
+    c_drive_base_dir = c_drive_base_dir + "_" + bot_name
+    
+def folder_create(strFolderPath=""):
+    """
+    while making leaf directory if any intermediate-level directory is missing,
+    folder_create() method will create them all.
+
+    Parameters:
+        folderPath (str) : path to the folder where the folder is to be created.
+
+    For example consider the following path:
+        
+        Suppose we want to create directory ‘krishna’ but Directory ‘project’ and ‘python’ are unavailable in the path.
+        Then folder_create() method will create all unavailable/missing directory in the specified path.
+        ‘project’ and ‘python’ will be created first then ‘krishna’ directory will be created.
+    """
+    
+    try:
+        if not strFolderPath:
+            strFolderPath = gui_get_any_input_from_user('folder path to Create folder')
+
+        if not os.path.exists(strFolderPath):
+            os.makedirs(strFolderPath)
+    except Exception as ex:
+        print("Error in folder_create="+str(ex))
+
+def _create_status_log_file(xtLogFilePath):
+    """
+    Internal Function to create Status Log File
+    """
+    if not os.path.exists(xtLogFilePath):
+        df = pd.DataFrame({'Timestamp': [], 'Status':[]})
+        writer = pd.ExcelWriter(xtLogFilePath, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='Sheet1', index=False)
+        writer.save()
+        writer.close()
+
+# @timeit
+def _init_log_file():
+    """
+    Generates the log and saves it to the file in the given base directory. Internal function
+    """
+    global log_path
+    global fullPathToStatusLogFile
+    
+    try:
+        if bot_name:
+            excelFileName = str(bot_name) + "-StatusLog.xlsx"
+        else:
+            excelFileName = "StatusLog.xlsx"
+
+        fullPathToStatusLogFile = os.path.join(folderPathToStatusLogFile,excelFileName)
+        
+        folder_create(folderPathToStatusLogFile)
+        
+        _create_status_log_file(fullPathToStatusLogFile)   
+
+    except Exception as ex:
+        print("ERROR in _init_log_file="+str(ex))
+
+def folder_read_text_file(txt_file_path=""):
+    """
+    Reads from a given text file and returns entire contents as a single list
+    """
+    try:
+        if not txt_file_path:
+            txt_file_path = gui_get_any_file_from_user('the text file to READ from',"txt")
+
+        with open(txt_file_path) as f:
+            file_contents = f.readlines()
+        return file_contents
+    except:
+        return None
+
+def folder_write_text_file(txt_file_path="",contents=""):
+    """
+    Writes given contents to a text file
+    """
+    try:
+        
+        if not txt_file_path:
+            txt_file_path = gui_get_any_file_from_user('the text file to WRITE to',"txt")
+
+        if not contents:
+            contents = gui_get_any_input_from_user('text file contents')
+
+        f = open(txt_file_path,'w')
+        f.writelines(str(contents))
+        f.close()
+        
+    except Exception as ex:
+        print("Error in folder_write_text_file="+str(ex))
+
+def _ask_user_semi_automatic_mode():
+    """
+    Ask user to 'Enable Semi Automatic Mode'
+    """
+    global enable_semi_automatic_mode
+    values = []
+    
+    stored_do_not_ask_user_preference = folder_read_text_file(os.path.join(config_folder_path, 'Dont_Ask_Again.txt'))
+    enable_semi_automatic_mode = folder_read_text_file(os.path.join(config_folder_path, 'Semi_Automatic_Mode.txt'))
+
+    if enable_semi_automatic_mode:
+        enable_semi_automatic_mode = enable_semi_automatic_mode[0]
+    
+    bot_config_path = os.path.join(config_folder_path,bot_name + ".xlsx")
+
+    if stored_do_not_ask_user_preference is None or str(stored_do_not_ask_user_preference[0]).lower() == 'false':
+
+        layout = [[sg.Text('Do you want me to store GUI responses & use them next time when you run this BOT ?',text_color='orange',font='Courier 13')],
+                [sg.Submit('Yes',bind_return_key=True,button_color=('white','green'),font='Courier 14'), sg.CloseButton('No', button_color=('white','firebrick'),font='Courier 14')],
+                [sg.Checkbox('Do not ask me again', key='-DONT_ASK_AGAIN-',default=False, text_color='yellow',enable_events=True)],
+                [sg.Text("To see this message again, goto 'Config_Files' folder of your BOT and change 'Dont_Ask_Again.txt' to False. \n Please find path here: {}".format(os.path.join(config_folder_path, 'Dont_Ask_Again.txt')),key='-DND-',visible=False,font='Courier 8')]]
+
+        window = sg.Window('ClointFusion - Enable Semi Automatic Mode ?',layout,return_keyboard_events=True,use_default_focus=False,disable_close=False,element_justification='c',keep_on_top=True,finalize=True,icon=cf_icon_file_path)
+        folder_write_text_file(os.path.join(config_folder_path, 'Dont_Ask_Again.txt'),str(False))
+
+        while True:
+            event, values = window.read()
+            if event == '-DONT_ASK_AGAIN-':
+                stored_do_not_ask_user_preference = values['-DONT_ASK_AGAIN-']
+                folder_write_text_file(os.path.join(config_folder_path, 'Dont_Ask_Again.txt'),str(stored_do_not_ask_user_preference))
+
+                if values['-DONT_ASK_AGAIN-']:
+                    window.Element('-DND-').Update(visible=True)
+                else:
+                    window.Element('-DND-').Update(visible=False)
+                    
+            if event in (sg.WIN_CLOSED, 'No'): #ask me every time
+                enable_semi_automatic_mode = False
+                break
+            elif event == 'Yes': #do not ask me again
+                enable_semi_automatic_mode = True
+                break
+    
+        window.close()
+
+        if not os.path.exists(bot_config_path):
+            df = pd.DataFrame({'SNO': [],'KEY': [], 'VALUE':[]})
+            writer = pd.ExcelWriter(bot_config_path, engine='xlsxwriter')
+            df.to_excel(writer, sheet_name='Sheet1', index=False)
+            writer.save()
+            writer.close()
+
+        if enable_semi_automatic_mode:
+            print("Semi Automatic Mode is ENABLED "+ show_emoji())
+        else:
+            print("Semi Automatic Mode is DISABLED "+ show_emoji())
+        
+        folder_write_text_file(os.path.join(config_folder_path, 'Semi_Automatic_Mode.txt'),str(enable_semi_automatic_mode))
+
+_download_cloint_ico()
 
 load_missing_python_packages()
 update_all_packages_in_cloint_fusion_virtual_environment()
@@ -183,7 +407,6 @@ import json
 import time
 import pandas as pd
 import keyboard as kb
-import logging
 import PySimpleGUI as sg
 import os
 import xlrd
@@ -192,7 +415,7 @@ from openpyxl import Workbook
 from openpyxl import load_workbook
 import datetime
 import subprocess
-import sys
+
 from functools import lru_cache
 import threading
 from threading import Timer
@@ -243,29 +466,54 @@ from texthero import preprocessing
 import seaborn as sb
 import matplotlib.pyplot as plt
 from urllib.request import urlopen 
+from hashlib import sha256
+from PIL import Image
+import numpy as np
+from scipy.ndimage import gaussian_gradient_magnitude
+from wordcloud import WordCloud, ImageColorGenerator
+from bs4 import BeautifulSoup
+import requests
+import pdfplumber
 
+import math
+import watchdog.events
+import watchdog.observers
+from PyQt5 import QtWidgets, QtCore, QtGui
+import tkinter as tk
+from PIL import ImageGrab
 sg.theme('Dark') 
-c_drive_base_dir = ""
 
-if os_name == 'windows':
-    c_drive_base_dir = r"C:\ClointFusion\My_Bot"  
-# else: # to be tested in Linux Environemnt
-#     c_drive_base_dir = r"\home\ClointFusion\My_Bot"
+# ########################
+# ClointFusion's DEFAULT SERVICES
 
-img_path =  "" 
-batch_file_path = ""
-config_folder_path = ""
-output_folder_path = ""
-error_screen_shots_path = ""
-folderPathToStatusLogFile = ""
-current_working_dir = os.path.dirname(os.path.realpath(__file__)) 
-Cloint_PNG_Logo_Path = ""
-bot_name = ""
-excel_operations_excel_file_1 = ""
+_set_bot_name()
+_welcome_to_clointfusion()
+folder_create(c_drive_base_dir) 
 
-# print("ClointFusion module running at " + str(current_working_dir) + " " + show_emoji())
+log_path = os.path.join(c_drive_base_dir, "Logs")
+img_folder_path =  os.path.join(c_drive_base_dir, "Images") 
+batch_file_path = os.path.join(c_drive_base_dir, "Batch_File") 
+config_folder_path = os.path.join(c_drive_base_dir, "Config_Files") 
+output_folder_path = os.path.join(c_drive_base_dir, "Output") 
+error_screen_shots_path = os.path.join(c_drive_base_dir, "Error_Screenshots")
+folderPathToStatusLogFile = os.path.join(c_drive_base_dir,"StatusLogExcel")
+Cloint_PNG_Logo_Path = os.path.join(img_folder_path,"Cloint_Logo.PNG")
+client_secret_gmail_json_path = os.path.join(config_folder_path, "cs.json")
 
-#Web Browser Automation Global Variables
+folder_create(log_path)
+folder_create(img_folder_path)
+folder_create(batch_file_path)
+folder_create(config_folder_path)
+folder_create(error_screen_shots_path)
+folder_create(output_folder_path)
+_init_log_file()
+
+_ask_user_semi_automatic_mode()
+
+# ########################
+
+# Global VARIABLES
+# #Web Browser Automation Global Variables
 service = ""
 driver = ""
 URL = ""
@@ -300,62 +548,123 @@ def timeit(method):
         return result
     return timed
 
-def pysimplegui_save_settings(settings_file, values):
+def read_semi_automatic_log(key):
     """
-    Save Settings of GUI functions. This is an internal function called by all 4 GUI functions
+    Function to read a value from semi_automatic_log for a given key
     """
     try:
-        if values:    
-            with open(settings_file, 'w') as f:
-                json.dump(eval(str(values)), f)
+        bot_config_path = os.path.join(config_folder_path,bot_name + ".xlsx")
+
+        df = pd.read_excel(bot_config_path)
+        value = df[df['KEY'] == key]['VALUE'].to_list()
+        value = str(value[0])
+        return value
+
+    except:
+        return None
+
+def excel_is_value_exists(excel_path,sheet_name='Sheet1',header=0,usecols="",value=""):
+    """
+    Check if a given value exists in given excel. Returns True / False
+    """
+    try:
+        if usecols:
+            df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header, usecols=usecols)
+        else:
+            df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header)
+        
+        if value in df.values:
+            df = ''
+            return True
+        else:
+            df = ''
+            return False
+
     except Exception as ex:
-        print("Error in pysimplegui_save_settings="+str(ex))
+        print("Error in excel_is_value_exists="+str(ex))
 
-def pysimplegui_load_settings(settings_file):
+def update_semi_automatic_log(key, value):
     """
-    Load Settings of GUI functions. This is an internal function called by all 4 GUI functions
+    Update semi automatic excel log 
     """
-    with open(settings_file, 'r') as f:
-        return jsonload(f)
+    try:
+        bot_config_path = os.path.join(config_folder_path,bot_name + ".xlsx")
 
-def gui_get_any_file_from_user(Extension_Without_Dot="*"):    
+        if excel_is_value_exists(bot_config_path,usecols=['KEY'],value=key):
+            df = pd.read_excel(bot_config_path)
+            row_index = df.index[df['KEY'] == key].tolist()[0]
+            
+            df.loc[row_index,'VALUE'] = value
+            df.to_excel(bot_config_path,index=False)
+        else:
+            reader = pd.read_excel(bot_config_path)
+            
+            df = pd.DataFrame({'SNO': [len(reader)+1], 'KEY': [key], 'VALUE':[value]})
+            writer = pd.ExcelWriter(bot_config_path, engine='openpyxl')
+            writer.book = load_workbook(bot_config_path)
+            writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
+        
+            df.to_excel(writer,index=False,header=False,startrow=len(reader)+1)
+            writer.close()
+
+    except Exception as ex:
+        print("Error in update_semi_automatic_log="+str(ex))
+
+def gui_get_any_file_from_user(msgForUser="the file : ",Extension_Without_Dot="*"):    
     """
     Generic function to accept file path from user using GUI. Returns the filepath value in string format.Default allows all files i.e *
+
+    Default Text: "Please choose "
     """
+    values = []
     try:
+        oldValue = ""
+        oldKey = msgForUser
+        show_gui = False
+        existing_value = read_semi_automatic_log(msgForUser)
 
-        GFFU_SETTINGS = {'-FILE-': ""}
-        SETTINGS_FILE = os.path.join(config_folder_path, r'settings_gui_get_any_file_from_user.cfg')
-        
-        try:
-            SETTINGS_KEYS_TO_ELEMENT_KEYS = pysimplegui_load_settings(SETTINGS_FILE)
-        except:
-            SETTINGS_KEYS_TO_ELEMENT_KEYS = GFFU_SETTINGS
+        if existing_value is None:
+            show_gui = True
 
-        oldFilePath = SETTINGS_KEYS_TO_ELEMENT_KEYS['-FILE-']
+        if str(enable_semi_automatic_mode).lower() == 'false' and existing_value:
+            show_gui = True
+            oldValue = existing_value
+            
+        if show_gui:
+            layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16',text_color='orange')],
+                [sg.Text('Please choose '),sg.Text(text=oldKey + " (ending with .{})".format(str(Extension_Without_Dot).lower()),font=('Courier 12'),text_color='yellow'),sg.Input(default_text=oldValue ,key='-FILE-', enable_events=True), sg.FileBrowse(file_types=((".{} File".format(Extension_Without_Dot), "*.{}".format(Extension_Without_Dot)),))],
+                [sg.Submit('Done',button_color=('white','green'),bind_return_key=True),sg.CloseButton('Close',button_color=('white','firebrick'))]]
 
-        layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16',text_color='orange')],
-                [sg.Text('Please choose the file having the extension:',text_color='yellow'),sg.Text(text="." + Extension_Without_Dot,font=('Courier 16'),text_color='red')],[sg.Input(default_text=oldFilePath, key='-FILE-', visible=True, enable_events=True), sg.FileBrowse(file_types=((".{} File".format(Extension_Without_Dot), "*.{}".format(Extension_Without_Dot)),))],
-                [sg.Submit('Done',button_color=('white','green')),sg.CloseButton('Close',button_color=('white','firebrick'))]]
+            window = sg.Window('ClointFusion',layout, return_keyboard_events=True,use_default_focus=True,disable_close=False,element_justification='c',keep_on_top=True, finalize=True,icon=cf_icon_file_path)
 
-        window = sg.Window('ClointFusion',layout, return_keyboard_events=True,use_default_focus=True,disable_close=False,element_justification='c',keep_on_top=True, finalize=True)
-
-        while True:
-                event, values = window.read()
-                if event == sg.WIN_CLOSED or event == 'Close':
-                    break
-                if event == 'Done':
-                    if values['-FILE-']:
+            while True:
+                    event, values = window.read()
+                    if event == sg.WIN_CLOSED or event == 'Close':
                         break
-                    else:
-                        message_pop_up("Please enter the required values")
-                        print("Please enter the values")
-        window.close()
-        pysimplegui_save_settings(SETTINGS_FILE,values)
-        return str(values['-FILE-'])
+                    if event == 'Done':
+                        if values['-FILE-']:
+                            break
+                        else:
+                            message_pop_up("Please enter the required values")
+                            # print("Please enter the values")
+            window.close()
+            values['-KEY-'] = msgForUser
+
+            update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-FILE-']).strip())
+        
+            return str(values['-FILE-']).strip()
+
+        else:
+            return str(existing_value)
 
     except Exception as ex:
         print("Error in gui_get_any_file_from_user="+str(ex))
+
+
+
+
+
+
     
 def excel_get_all_sheet_names(excelFilePath=""):
     """
@@ -386,235 +695,386 @@ def excel_get_all_header_columns(excelFilePath,sheet_name="Sheet1",header=0):
         return col_lst
     except Exception as ex:
         print("Error in excel_get_all_header_columns="+str(ex))
-    
-def gui_get_excel_sheet_header_from_user(): 
+
+def message_counter_down_timer(start_value=5):
+    """
+    Function to show count-down timer. Default is 5 seconds.
+    Ex: message_counter_down_timer()
+    """
+    CONTINUE = True
+    layout = [[sg.Text('Starting in',justification='c')],[sg.Text('',size=(10, 0),font=('Helvetica', 20),justification='c', key='text')],
+            [sg.Exit(button_color=('white', 'firebrick4'), key='Cancel')]]
+
+    window = sg.Window('Cloint Fusion - Countdown Timer', layout, no_titlebar=True, auto_size_buttons=False,keep_on_top=True, grab_anywhere=False, element_justification='c',element_padding=(0, 0),finalize=True,icon=cf_icon_file_path)
+
+    current_value = start_value + 1
+
+    while True:
+        event, values = window.read(timeout=2)
+        current_value = current_value - 1
+        time.sleep(1)
+            
+        if current_value == 0:
+            CONTINUE = True
+            break
+            
+        if event in (sg.WIN_CLOSED, 'Cancel'):    
+            CONTINUE = False  
+            print("Action cancelled by user")
+            break
+
+        window['text'].update(value=current_value)
+
+    window.close()
+    return CONTINUE
+
+def gui_get_consent_from_user(msgForUser="Continue ?"):    
+    """
+    Generic function to get consent from user using GUI. Returns the yes or no
+
+    Default Text: "Do you want to "
+    """
+    values = []
+    try:
+        oldValue = ""
+        oldKey = msgForUser
+        show_gui = False
+        existing_value = read_semi_automatic_log(msgForUser)
+
+        if existing_value is None:
+            show_gui = True
+
+        if str(enable_semi_automatic_mode).lower() == 'false' and existing_value:
+            show_gui = True
+            oldValue = existing_value
+            
+        if show_gui:
+            layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16',text_color='orange')],
+                [sg.Text('Do you want to '),sg.Text(text=oldKey,font=('Courier 12'),text_color='yellow')],
+                [sg.Submit('Yes',button_color=('white','green'),font=('Courier 14'),bind_return_key=True),sg.Submit('No',button_color=('white','firebrick'),font=('Courier 14'))]]
+
+            window = sg.Window('ClointFusion',layout, return_keyboard_events=True,use_default_focus=True,disable_close=False,element_justification='c',keep_on_top=True, finalize=True,icon=cf_icon_file_path)
+
+            while True:
+                event, values = window.read()
+                if event == 'No':
+                    oldValue = 'No'
+                    break
+                if event == 'Yes':
+                    oldValue = 'Yes'
+                    break
+                        
+            window.close()
+            values['-KEY-'] = msgForUser
+
+            update_semi_automatic_log(str(values['-KEY-']).strip(),str(oldValue))
+        
+            return oldValue
+
+        else:
+            return str(existing_value)
+
+    except Exception as ex:
+        print("Error in gui_get_consent_from_user="+str(ex))
+
+def gui_get_dropdownlist_values_from_user(msgForUser="",dropdown_list=[],multi_select=True): 
+    """
+    Generic function to accept one of the drop-down value from user using GUI. Returns all chosen values in list format.
+
+    Default Text: "Please choose the item(s) from "
+    """
+
+    values = []
+    dropdown_list = dropdown_list
+    try:
+        oldValue = []
+        oldKey = msgForUser
+        show_gui = False
+        existing_value = read_semi_automatic_log(msgForUser)
+        
+        if existing_value is None:
+            show_gui = True
+
+        if str(enable_semi_automatic_mode).lower() == 'false' and existing_value:
+            show_gui = True
+            oldValue = existing_value
+            
+        if show_gui:
+            if multi_select:
+                layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16', text_color='orange')],
+                        [sg.Text('Please choose the item(s) from '),sg.Text(text=oldKey,font=('Courier 12'),text_color='yellow'),sg.Listbox(dropdown_list,size=(30, 5),key='-EXCELCOL-',default_values=oldValue,select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,enable_events=True,change_submits=True)],#oldExcelCols
+                        [sg.Submit('Done',button_color=('white','green'),bind_return_key=True),sg.CloseButton('Close',button_color=('white','firebrick'))]]
+
+            else:
+                layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16', text_color='orange')],
+                        [sg.Text('Please choose an item from '),sg.Text(text=oldKey,font=('Courier 12'),text_color='yellow'),sg.Listbox(dropdown_list,size=(30, 5),key='-EXCELCOL-',default_values=oldValue,select_mode=sg.LISTBOX_SELECT_MODE_SINGLE,enable_events=True,change_submits=True)],#oldExcelCols
+                        [sg.Submit('Done',button_color=('white','green'),bind_return_key=True),sg.CloseButton('Close',button_color=('white','firebrick'))]]
+
+            window = sg.Window('ClointFusion',layout, return_keyboard_events=True,use_default_focus=False,disable_close=False,element_justification='c',keep_on_top=True, finalize=True,icon=cf_icon_file_path)
+
+            while True:                
+                event, values = window.read()
+                
+                if event is None or event == 'Cancel' or event == "Escape:27":
+                    values = []
+                    break
+
+                if event == 'Done':
+                    if values and values['-EXCELCOL-']:
+                        break
+                    else:
+                        message_pop_up("Please enter all the values")
+
+            window.close()
+            values['-KEY-'] = msgForUser
+            
+            update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-EXCELCOL-']).strip())
+
+            return values['-EXCELCOL-']
+        
+        else:
+            return oldValue
+            
+    except Exception as ex:
+        print("Error in gui_get_dropdownlist_values_from_user="+str(ex))
+
+
+def gui_get_excel_sheet_header_from_user(msgForUser=""): 
     """
     Generic function to accept excel path, sheet name and header from user using GUI. Returns all these values in disctionary format.
+
+    Default Text: "Please choose the excel "
     """
-    global excel_operations_excel_file_1
+    values = []
+    sheet_namesLst = []
     try:
-        GESHFU_SETTINGS = {'-FILEPATH-': "", '-SHEET-': "Sheet1" , '-HEADER-': '0', '-USE_THIS_EXCEL-': True}
-        SETTINGS_FILE = os.path.join(config_folder_path, r'settings_gui_get_excel_sheet_header_from_user.cfg')
-        sheet_namesLst = []
+        oldValue = "" + "," + "Sheet1" + "," + "0"
+        oldKey = msgForUser
+        show_gui = False
+        existing_value = read_semi_automatic_log(msgForUser)
+        
+        if existing_value is None:
+            show_gui = True
 
-        try:
-            SETTINGS_KEYS_TO_ELEMENT_KEYS = pysimplegui_load_settings(SETTINGS_FILE)
-        except:
-            SETTINGS_KEYS_TO_ELEMENT_KEYS = GESHFU_SETTINGS
-
-        oldFilePath = SETTINGS_KEYS_TO_ELEMENT_KEYS['-FILEPATH-']
-        oldSheet = SETTINGS_KEYS_TO_ELEMENT_KEYS['-SHEET-']
-        oldHeader = SETTINGS_KEYS_TO_ELEMENT_KEYS['-HEADER-']
-        old_Use_This_excel = SETTINGS_KEYS_TO_ELEMENT_KEYS['-USE_THIS_EXCEL-']
-
-        layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16', text_color='orange')],
-                    [sg.Text('Please choose your excel file',auto_size_text=True), sg.Input(default_text=oldFilePath,key="-FILEPATH-",enable_events=True,change_submits=True), sg.FileBrowse(file_types=(("Excel File", "*.xls"),("Excel File", "*.xlsx")))], 
-                    [sg.Text('Sheet Name'), sg.Combo(sheet_namesLst,default_value=oldSheet,size=(20, 0),key="-SHEET-",enable_events=True)], 
-                    [sg.Text('Choose the header row'),sg.Spin(values=('0', '1', '2', '3', '4', '5'),initial_value=oldHeader,key="-HEADER-",enable_events=True,change_submits=True)],
-                    [sg.Checkbox('Use this excel file for all the excel related operations of this BOT', key='-USE_THIS_EXCEL-',default=old_Use_This_excel, text_color='yellow')],
-                    [sg.Submit('Done',button_color=('white','green')),sg.CloseButton('Close',button_color=('white','firebrick'))]]
-        values = []
-
-        window = sg.Window('ClointFusion',layout, return_keyboard_events=True,use_default_focus=False,disable_close=False,element_justification='c',keep_on_top=True, finalize=True)
-
-        while True:
+        if str(enable_semi_automatic_mode).lower() == 'false' and existing_value:
+            show_gui = True
+            oldValue = existing_value
             
-            if oldFilePath: 
-                sheet_namesLst = excel_get_all_sheet_names(oldFilePath)
-                window['-SHEET-'].update(values=sheet_namesLst)   
-            
-            event, values = window.read()
-            
-            if event is None or event == 'Cancel' or event == "Escape:27":
-                values = []
-                break
-
-            if event == 'Done':
-                if values and values['-FILEPATH-'] and values['-SHEET-']:
-                    break
-                else:
-                    message_pop_up("Please enter all the values")
-
-            if values['-FILEPATH-']: 
-                sheet_namesLst = excel_get_all_sheet_names(values['-FILEPATH-'])
-                window['-SHEET-'].update(values=sheet_namesLst)   
-
-                if event == values["-USE_THIS_EXCEL-"]:
-                    excel_operations_excel_file_1 = values['-FILEPATH-']
-                
-            if values['-SHEET-'] != 'Sheet1':
-                window['-SHEET-'].update(value=values['-SHEET-']) 
-            elif len(sheet_namesLst) > 1:
-                window['-SHEET-'].update(value=sheet_namesLst[0]) 
-
-        window.close()
-        pysimplegui_save_settings(SETTINGS_FILE,values)
-        return values['-FILEPATH-'], values ['-SHEET-'], int(values['-HEADER-'])
+        if show_gui:
+            oldFilePath, oldSheet , oldHeader = str(oldValue).split(",")
     
+            layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16', text_color='orange')],
+                    [sg.Text('Please choose the excel '),sg.Text(text=oldKey,font=('Courier 12'),text_color='yellow'),sg.Input(default_text=oldFilePath,key="-FILEPATH-",enable_events=True,change_submits=True), sg.FileBrowse(file_types=(("Excel File", "*.xls"),("Excel File", "*.xlsx")))], 
+                    [sg.Text('Sheet Name'), sg.Combo(sheet_namesLst,default_value=oldSheet,size=(20, 0),key="-SHEET-",enable_events=True)], 
+                    [sg.Text('Choose the header row'),sg.Spin(values=('0', '1', '2', '3', '4', '5'),initial_value=int(oldHeader),key="-HEADER-",enable_events=True,change_submits=True)],
+                    # [sg.Checkbox('Use this excel file for all the excel related operations of this BOT',enable_events=True, key='-USE_THIS_EXCEL-',default=old_Use_This_excel, text_color='yellow')],
+                    [sg.Submit('Done',button_color=('white','green'),bind_return_key=True),sg.CloseButton('Close',button_color=('white','firebrick'))]]
+        
+            window = sg.Window('ClointFusion',layout, return_keyboard_events=True,use_default_focus=False,disable_close=False,element_justification='c',keep_on_top=True, finalize=True,icon=cf_icon_file_path)
+
+            while True:
+                if oldFilePath: 
+                    sheet_namesLst = excel_get_all_sheet_names(oldFilePath)
+                    window['-SHEET-'].update(values=sheet_namesLst)   
+                
+                event, values = window.read()
+                
+                if event is None or event == 'Cancel' or event == "Escape:27":
+                    values = []
+                    break
+
+                if event == 'Done':
+                    if values and values['-FILEPATH-'] and values['-SHEET-']:
+                        break
+                    else:
+                        message_pop_up("Please enter all the values")
+
+                if event == '-FILEPATH-':
+                    sheet_namesLst = excel_get_all_sheet_names(values['-FILEPATH-'])
+                    window['-SHEET-'].update(values=sheet_namesLst)   
+                    window.refresh()
+                    oldFilePath = ""
+
+                    if len(sheet_namesLst) >= 1:
+                        window['-SHEET-'].update(value=sheet_namesLst[0]) 
+
+                if event == '-SHEET-':
+                    window['-SHEET-'].update(value=values['-SHEET-'])
+
+            window.close()
+            values['-KEY-'] = msgForUser
+            
+            concatenated_value = values['-FILEPATH-'] + "," +  values ['-SHEET-'] + "," + values['-HEADER-']
+            update_semi_automatic_log(str(values['-KEY-']).strip(),str(concatenated_value))
+
+            return values['-FILEPATH-'] , values ['-SHEET-'] , int(values['-HEADER-'])
+        
+        else:
+            oldFilePath, oldSheet , oldHeader = str(existing_value).split(",")
+            return oldFilePath, oldSheet , int(oldHeader)
+            
     except Exception as ex:
         print("Error in gui_get_excel_sheet_header_from_user="+str(ex))
     
-def gui_get_folder_path_from_user():    
+def gui_get_folder_path_from_user(msgForUser="the folder : "):    
     """
     Generic function to accept folder path from user using GUI. Returns the folderpath value in string format.
+
+    Default text: "Please choose "
     """
+    values = []
     try:
+        oldValue = ""
+        oldKey = msgForUser
+        show_gui = False
+        existing_value = read_semi_automatic_log(msgForUser)
 
-        GFFU_SETTINGS = {'-FOLDER-': ""}
-        SETTINGS_FILE = os.path.join(config_folder_path, r'settings_gui_get_folder_path_from_user.cfg')
-        
-        try:
-            SETTINGS_KEYS_TO_ELEMENT_KEYS = pysimplegui_load_settings(SETTINGS_FILE)
-        except:
-            SETTINGS_KEYS_TO_ELEMENT_KEYS = GFFU_SETTINGS
+        if existing_value is None:
+            show_gui = True
 
-        oldFolderPath = SETTINGS_KEYS_TO_ELEMENT_KEYS['-FOLDER-']
+        if str(enable_semi_automatic_mode).lower() == 'false' and existing_value:
+            show_gui = True
+            oldValue = existing_value
+            
+        if show_gui:
+            layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16',text_color='orange')],
+                [sg.Text('Please choose '),sg.Text(text=oldKey,font=('Courier 12'),text_color='yellow'),sg.Input(default_text=oldValue ,key='-FOLDER-', enable_events=True), sg.FolderBrowse()],
+                [sg.Submit('Done',button_color=('white','green'),bind_return_key=True),sg.CloseButton('Close',button_color=('white','firebrick'))]]
 
-        layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16',text_color='orange')],
-                [sg.Text('Please choose the folder',text_color='yellow')],[sg.Input(default_text=oldFolderPath ,key='-FOLDER-', visible=True, enable_events=True), sg.FolderBrowse()],
-                [sg.Submit('Done',button_color=('white','green')),sg.CloseButton('Close',button_color=('white','firebrick'))]]
+            window = sg.Window('ClointFusion',layout, return_keyboard_events=True,use_default_focus=True,disable_close=False,element_justification='c',keep_on_top=True,finalize=True,icon=cf_icon_file_path)
 
-        window = sg.Window('ClointFusion',layout, return_keyboard_events=True,use_default_focus=True,disable_close=False,element_justification='c',keep_on_top=True,finalize=True)
+            while True:
+                event, values = window.read()
 
-        while True:
-            event, values = window.read()
-            if event == sg.WIN_CLOSED or event == 'Close':
-                break
-            if event == 'Done':
-                if values and values['-FOLDER-']:
+                if event == sg.WIN_CLOSED or event == 'Close':
                     break
-                else:
-                    message_pop_up("Please enter the required values")
+                if event == 'Done':
+                    if values and values['-FOLDER-']:
+                        break
+                    else:
+                        message_pop_up("Please enter the required values")
+            
+            window.close()
+            values['-KEY-'] = msgForUser
+
+            update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-FOLDER-']).strip())
         
-        window.close()
-        pysimplegui_save_settings(SETTINGS_FILE,values)
-        return str(values['-FOLDER-'])
+            return str(values['-FOLDER-']).strip()
+
+        else:
+            return str(existing_value)
 
     except Exception as ex:
         print("Error in gui_get_folder_path_from_user="+str(ex))
-    
-def gui_get_any_input_from_user(msgForUser=""):    
+
+
+def gui_get_any_input_from_user(msgForUser="the value : ",password=False,mandatory_field=True):    
     """
     Generic function to accept any input (text / numeric) from user using GUI. Returns the value in string format.
+    Please use unique message (key) for each value.
+
+    Default Text: "Please enter "
     """
-    
+    values = []
     try:
-        GIFU_SETTINGS = {'-KEY-':"",'-VALUE-': ""}
-        SETTINGS_FILE = os.path.join(config_folder_path, r'settings_gui_get_any_input_from_user.cfg')
-        
-        try:
-            SETTINGS_KEYS_TO_ELEMENT_KEYS = pysimplegui_load_settings(SETTINGS_FILE)
-        except:
-            SETTINGS_KEYS_TO_ELEMENT_KEYS = GIFU_SETTINGS
+        oldValue = ""
+        oldKey = msgForUser
+        show_gui = False
+        existing_value = read_semi_automatic_log(msgForUser)
 
-        oldKey = SETTINGS_KEYS_TO_ELEMENT_KEYS['-KEY-']
-        oldValue = SETTINGS_KEYS_TO_ELEMENT_KEYS['-VALUE-']
-
-        # if not oldKey :
-        #     oldKey = msgForUser
-        if msgForUser:
-            oldKey = msgForUser
-            oldValue = ""
-        layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16',text_color='orange')],
-                [sg.Text('Please enter the '),sg.Text(text=oldKey,font=('Courier 12'),text_color='yellow'),sg.Input(default_text=oldValue,key='-VALUE-', justification='c')],
-                [sg.Text('This field is mandatory',text_color='red')],
-                [sg.Submit('Done',button_color=('white','green')),sg.CloseButton('Close',button_color=('white','firebrick'))]]
-
-        window = sg.Window('ClointFusion',layout, return_keyboard_events=True,use_default_focus=True,disable_close=True,element_justification='c',keep_on_top=True,finalize=True)
-
-        while True:
+        if existing_value == "nan":
+            existing_value = None
             
-            event, values = window.read()
-            if event == sg.WIN_CLOSED or event == 'Close':
-                print(values['-VALUE-'])
+        if existing_value is None:
+            show_gui = True
 
-                if oldValue or (values and values['-VALUE-']):
-                    break
-
-                else:
-                    message_pop_up("Its a mandatory field !.. Cannot proceed, exiting now..")
-                    print("Exiting ClointFusion, as Mandatory field is missing")
-                    sys.exit(0)
+        if str(enable_semi_automatic_mode).lower() == 'false' and existing_value:
+            show_gui = True
+            oldValue = existing_value
             
-            if event == 'Done':
-                if values['-VALUE-']:
-                    break
-                else:
-                    message_pop_up("This value is required. Please enter the value..")
-        
-        window.close()
-        values['-KEY-'] = msgForUser
-        pysimplegui_save_settings(SETTINGS_FILE,values)
+        layout = ""
+        if show_gui:
+            if password:
+                layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16',text_color='orange')],
+                    [sg.Text('Please enter '),sg.Text(text=oldKey,font=('Courier 12'),text_color='yellow'),sg.Input(default_text=oldValue,key='-VALUE-', justification='c',password_char='*')],
+                    [sg.Text('This field is mandatory',text_color='red')],
+                    [sg.Submit('Done',button_color=('white','green'),bind_return_key=True),sg.CloseButton('Close',button_color=('white','firebrick'))]]
 
-        return str(values['-VALUE-']).strip()
+            elif not password and mandatory_field:
+                layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16',text_color='orange')],
+                    [sg.Text('Please enter '),sg.Text(text=oldKey,font=('Courier 12'),text_color='yellow'),sg.Input(default_text=oldValue,key='-VALUE-', justification='c')],
+                    [sg.Text('This field is mandatory',text_color='red')],
+                    [sg.Submit('Done',button_color=('white','green'),bind_return_key=True),sg.CloseButton('Close',button_color=('white','firebrick'))]]
+
+            elif not password and not mandatory_field:
+                layout = [[sg.Text("ClointFusion - Set Yourself Free for Better Work", font='Courier 16',text_color='orange')],
+                    [sg.Text('Please enter '),sg.Text(text=oldKey,font=('Courier 12'),text_color='yellow'),sg.Input(default_text=oldValue,key='-VALUE-', justification='c')],
+                    [sg.Submit('Done',button_color=('white','green'),bind_return_key=True),sg.CloseButton('Close',button_color=('white','firebrick'))]]
+
+            window = sg.Window('ClointFusion',layout, return_keyboard_events=True,use_default_focus=True,disable_close=True,element_justification='c',keep_on_top=True,finalize=True,icon=cf_icon_file_path)
+
+            while True:
+                
+                event, values = window.read()
+                if event == sg.WIN_CLOSED or event == 'Close':
+                    
+                    if oldValue or (values and values['-VALUE-']):
+                        break
+
+                    else:
+                        if mandatory_field:
+                            message_pop_up("Its a mandatory field !.. Cannot proceed, exiting now..")
+                            print("Exiting ClointFusion, as Mandatory field is missing")
+                            sys.exit(0)
+                        else:
+                            print("Mandatory field is missing, continuing with None/Empty value")
+                            break
+                
+                if event == 'Done':
+                    if values['-VALUE-']:
+                        break
+                    else:
+                        if mandatory_field:
+                            message_pop_up("This value is required. Please enter the value..")
+                        else:
+                            break
+            
+            window.close()
+            values['-KEY-'] = msgForUser
+            
+            update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-VALUE-']).strip())
+
+            return str(values['-VALUE-']).strip()
+        
+        else:
+            return str(existing_value)
+
     except Exception as ex:
         print("Error in gui_get_any_input_from_user="+str(ex))
-    
+
+
 def extract_filename_from_filepath(strFilePath=""):
     """
     Function which extracts file name from the given filepath
     """
-    try:
-        if strFilePath:
+    if strFilePath:
+        try:
             strFileName = strFilePath[strFilePath.rindex("\\") + 1 : ]
             strFileName = strFileName.split(".")[0]
             return strFileName
-    except Exception as ex:
-        print("Error in extract_filename_from_filepath="+str(ex))
+        except Exception as ex:
+            strFileName = strFilePath[strFilePath.rindex("/") + 1 : ]
+            strFileName = strFileName.split(".")[0]
+            return strFileName
+
+
+    else:
+        print("Please enter the value="+str(strFilePath))    
+
     
-# @timeit
-def folder_create(strFolderPath):
-    """
-    while making leaf directory if any intermediate-level directory is missing,
-    folder_create() method will create them all.
 
-    Parameters:
-        folderPath (str) : path to the folder where the folder is to be created.
-
-    For example consider the following path:
-        
-        Suppose we want to create directory ‘krishna’ but Directory ‘project’ and ‘python’ are unavailable in the path.
-        Then folder_create() method will create all unavailable/missing directory in the specified path.
-        ‘project’ and ‘python’ will be created first then ‘krishna’ directory will be created.
-    """
-    try:
-        if not os.path.exists(strFolderPath):
-            os.makedirs(strFolderPath)
-    except Exception as ex:
-        print("Error in folder_create="+str(ex))
     
-def _create_status_log_file(xtLogFilePath):
-    """
-    Internal Function to create Status Log File
-    """
-    if not os.path.exists(xtLogFilePath):
-        df = pd.DataFrame({'Timestamp': [], 'Status':[]})
-        writer = pd.ExcelWriter(xtLogFilePath, engine='xlsxwriter')
-        df.to_excel(writer, sheet_name='Sheet1', index=False)
-        writer.save()
 
-# @timeit
-def _init_status_log_file():
-    """
-    Generates the log and saves it to the file in the given base directory. Internal function
-    """
-    global fullPathToStatusLogFile
-    global bot_name
-
-    try:        
-        if bot_name:
-            excelFileName = str(bot_name) + "-StatusLog.xlsx"
-        else:
-            excelFileName = "StatusLog.xlsx"
-
-        fullPathToStatusLogFile = os.path.join(folderPathToStatusLogFile,excelFileName)
-        
-        folder_create(folderPathToStatusLogFile)
-        
-        _create_status_log_file(fullPathToStatusLogFile)
-
-    except Exception as ex:
-        print("ERROR in _init_status_log_file="+str(ex))
     
 # @background
 def excel_create_excel_file_in_given_folder(fullPathToTheFolder="",excelFileName="",sheet_name="Sheet1"):
@@ -637,14 +1097,14 @@ def excel_create_excel_file_in_given_folder(fullPathToTheFolder="",excelFileName
         ws = wb.active
         ws.title =sheet_name
 
-        if fullPathToTheFolder:
-            folder_create(fullPathToTheFolder)
-        else:
-            fullPathToTheFolder = gui_get_folder_path_from_user()
-
+        if not fullPathToTheFolder:
+            fullPathToTheFolder = gui_get_folder_path_from_user('the folder to create excel file')
+            
         if not excelFileName:
             excelFileName = gui_get_any_input_from_user("excel file name (without extension)")
         
+        folder_create(fullPathToTheFolder)
+
         if ".xlsx" in excelFileName:
             excel_path = os.path.join(fullPathToTheFolder,excelFileName)
         else:
@@ -657,26 +1117,7 @@ def excel_create_excel_file_in_given_folder(fullPathToTheFolder="",excelFileName
         return True
     except Exception as ex:
         print("Error in excel_create_excel_file_in_given_folder="+str(ex))
-    
-def _set_bot_name(strBotName=""):
-    """
-    Internal function
-    If a botname is given, it will be used in the log file and in Task Scheduler
-    we can also access the botname variable globally.
 
-    Parameters :
-        strBotName (str) : Name of the bot
-    """
-    global c_drive_base_dir
-    global bot_name
-
-    if not strBotName: #if user has not given bot_name
-        bot_name = current_working_dir[current_working_dir.rindex("\\") + 1 : ] #Assumption that user has given proper folder name and so taking it as BOT name
-    else:
-        strBotName = string_remove_special_characters(strBotName) 
-        bot_name = strBotName
-
-    c_drive_base_dir = c_drive_base_dir + "_" + bot_name
     
 def folder_create_text_file(textFolderPath="",txtFileName=""):
     """
@@ -690,10 +1131,10 @@ def folder_create_text_file(textFolderPath="",txtFileName=""):
     try:
 
         if not textFolderPath:
-            textFolderPath = gui_get_folder_path_from_user()
+            textFolderPath = gui_get_folder_path_from_user('the folder to create text file')
         
         if not txtFileName:
-            txtFileName = gui_get_any_input_from_user("Text File Name")
+            txtFileName = gui_get_any_input_from_user("text file name")
             txtFileName = txtFileName 
 
         if ".txt" not in txtFileName:
@@ -705,11 +1146,10 @@ def folder_create_text_file(textFolderPath="",txtFileName=""):
 
     except Exception as ex:
         print("Error in folder_create_text_file="+str(ex))
-    
 
-def get_image_from_base64(imgFileName,imgBase64Str):
+def _get_image_from_base64(imgFileName,imgBase64Str):
     """
-    Coverts the given Base64 string to an image and saves in given path
+    Internal function  which converts the given Base64 string to an image and saves in given path
 
     Parameters:
         imgFileName  (str) : image file name with png extension and optional path.
@@ -721,50 +1161,42 @@ def get_image_from_base64(imgFileName,imgBase64Str):
             with open(imgFileName,"wb") as f:
                 f.write(img_binary)
         except Exception as ex:
-            print("Error in get_image_from_base64="+str(ex))
+            print("Error in _get_image_from_base64="+str(ex))
+_get_image_from_base64(Cloint_PNG_Logo_Path,cloint_logo_base64)
+
+
+
+
         
-def string_remove_special_characters(inputStr):
-    """
-    Removes all the special character.
+# WatchDog : Monitors the given folder for creation / modification / deletion 
+class FileMonitor_Handler(watchdog.events.PatternMatchingEventHandler):
+    file_path = ""
+    def __init__(self):
+        watchdog.events.PatternMatchingEventHandler.__init__(self, ignore_patterns = None,
+                                                     ignore_directories = False, case_sensitive = True)
+    
+    def on_created(self, event):
+        file_path = str(event.src_path).replace("/","\\")
+        print("Created : {}".format(file_path))
+             
+    def on_deleted(self, event):
+        file_path = str(event.src_path).replace("/","\\")
+        print("Deleted : {}".format(file_path))
 
-    Parameters:
-        inputStr  (str) : string for removing all the special character in it.
+    def on_modified(self,event):
+        file_path = str(event.src_path).replace("/","\\")
+        print("Modified : {}".format(file_path))
 
-    Returns :
-        outputStr (str) : returns the alphanumeric string.
-    """
-    outputStr = ''.join(e for e in inputStr if e.isalnum())
-    return outputStr    
-
-# ########################
-_set_bot_name()
-folder_create(c_drive_base_dir) 
-
-img_path =  os.path.join(c_drive_base_dir, "Images") 
-batch_file_path = os.path.join(c_drive_base_dir, "Batch_File") 
-config_folder_path = os.path.join(c_drive_base_dir, "Config_Files") 
-output_folder_path = os.path.join(c_drive_base_dir, "Output") 
-error_screen_shots_path = os.path.join(c_drive_base_dir, "Error_Screenshots")
-folderPathToStatusLogFile = os.path.join(c_drive_base_dir,"StatusLogExcel")
-Cloint_PNG_Logo_Path = os.path.join(img_path,"Cloint_Logo.PNG")
-
-folder_create(img_path)
-folder_create(batch_file_path)
-folder_create(config_folder_path)
-folder_create(error_screen_shots_path)
-folder_create(output_folder_path)
-_init_status_log_file()
-get_image_from_base64(Cloint_PNG_Logo_Path,cloint_logo_base64)
-
-# ########################
-
-def create_batch_file(application_exe_pyw_file_path):
+def create_batch_file(application_exe_pyw_file_path=""):
     """
     Creates .bat file for the given application / exe or even .pyw BOT developed by you. This is required in Task Scheduler.
     """
 
     global batch_file_path
     try:
+        if not application_exe_pyw_file_path:
+            application_exe_pyw_file_path = gui_get_any_file_from_user('.pyw file for which .bat is to be made','pyw')
+
         application_name = application_exe_pyw_file_path[application_exe_pyw_file_path.rindex("\\")+1:]
 
         cmd = ""
@@ -794,7 +1226,7 @@ def create_batch_file(application_exe_pyw_file_path):
 def excel_create_file(fullPathToTheFile="",fileName="",sheet_name="Sheet1"):
     try:
         if not fullPathToTheFile:
-            fullPathToTheFile = gui_get_folder_path_from_user()
+            fullPathToTheFile = gui_get_any_input_from_user('folder path to create excel')
 
         if not fileName:
             fileName = gui_get_any_input_from_user("Excel File Name (without extension)")
@@ -827,7 +1259,7 @@ def folder_get_all_filenames_as_list(strFolderPath="",extension='all'):
     """
     try:
         if not strFolderPath:
-            strFolderPath = gui_get_folder_path_from_user()
+            strFolderPath = gui_get_folder_path_from_user('a folder to get all its filenames')
 
         if extension == "all":
             allFilesOfaFolderAsLst = [ f for f in os.listdir(strFolderPath)]
@@ -852,7 +1284,7 @@ def folder_delete_all_files(fullPathOfTheFolder="",file_extension_without_dot="a
     file_extension_with_dot = ''
     try:
         if not fullPathOfTheFolder:
-            fullPathOfTheFolder = gui_get_folder_path_from_user()
+            fullPathOfTheFolder = gui_get_folder_path_from_user('a folder to delete all its files')
 
         count = 0 
         if "." not in file_extension_without_dot :
@@ -869,7 +1301,7 @@ def folder_delete_all_files(fullPathOfTheFolder="",file_extension_without_dot="a
                 count +=1 
             except:
                 pass
-        print(str(count) + " files deleted")
+        
         return count
     except Exception as ex:
         print("Error in folder_delete_all_files="+str(ex)) 
@@ -885,7 +1317,7 @@ def message_pop_up(strMsg="",delay=3):
     """
     try:
         if not strMsg:
-            strMsg = gui_get_any_input_from_user("Message")
+            strMsg = gui_get_any_input_from_user("pop-up message")
         sg.popup_no_wait(strMsg,title='ClointFusion',auto_close_duration=delay, auto_close=True, keep_on_top=True,background_color="white",text_color="black")#,icon=cloint_ico_logo_base64)
     except Exception as ex:
         print("Error in message_pop_up="+str(ex))
@@ -908,124 +1340,13 @@ def message_flash(msg="",delay=3):
     """
     try:
         if not msg:
-            msg = gui_get_any_input_from_user("Message")
+            msg = gui_get_any_input_from_user("flash message")
 
         r = Timer(int(delay), key_hit_enter)
         r.start()
         pg.alert(text=msg, title='ClointFusion', button='OK')
     except Exception as ex:
         print("ERROR in message_flash="+str(ex))
-    
-def launch_any_exe_bat_application(pathOfExeFile):
-    """
-    Launches any exe or batch file.
-
-    Parameters:
-        pathOfExeFile  (str) : location of the file with extension.
-    """
-    try: 
-        subprocess.Popen(pathOfExeFile)
-        time.sleep(1) 
-    except Exception as ex:
-        print("ERROR in launch_any_exe_bat_application="+str(ex))
-    
-class myThread1 (threading.Thread):
-    def __init__(self,err_str):
-        threading.Thread.__init__(self)
-        self.err_str = err_str
-
-    def run(self):
-        message_flash(self.err_str)
-
-class myThread2 (threading.Thread):
-    def __init__(self,strFilePath):
-        threading.Thread.__init__(self)
-        self.strFilePath = strFilePath
-
-    def run(self):
-        time.sleep(1)
-        img = pg.screenshot()
-        time.sleep(1)
-
-        dt_tm= str(datetime.datetime.now())    
-    
-        dt_tm = dt_tm.replace(" ","_")
-        dt_tm = dt_tm.replace(":","-")
-        dt_tm = dt_tm.split(".")[0]
-        filePath = self.strFilePath + str(dt_tm)  + ".PNG"
-
-        img.save(str(filePath))
-        
-def take_error_screenshot(err_str):
-    """
-    Takes screenshot of an error popup parallely without waiting for the flow of the program.
-    The screenshot will be saved in the log folder for reference.
-
-    Parameters:
-        err_str  (str) : exception.
-    """
-    global error_screen_shots_path
-    try:
-        thread1 = myThread1(err_str)
-        thread2 = myThread2(error_screen_shots_path)
-
-        thread1.start()
-        thread2.start()
-
-        thread1.join()
-        thread2.join()
-    except Exception as ex:
-        print("Error in take_error_screenshot="+str(ex))
-    
-def update_log_excel_file(message=""):
-    """
-    Given message will be updated in the excel log file.
-
-    Parameters:
-        message  (str) : message to update.
-
-    Retursn:
-        returns a boolean true if updated sucessfully
-    """
-    global fullPathToStatusLogFile
-    try:
-        if not message:
-            message = gui_get_any_input_from_user("Message")
-
-        df = pd.DataFrame({'Timestamp': [datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")], 'Status':[message]})
-        writer = pd.ExcelWriter(fullPathToStatusLogFile, engine='openpyxl')
-        writer.book = load_workbook(fullPathToStatusLogFile)
-        writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
-    
-        reader = pd.read_excel(fullPathToStatusLogFile)
-        df.to_excel(writer,index=False,header=False,startrow=len(reader)+1)
-        writer.close()
-
-        print("Message updated at the row ")
-        return True
-    except Exception as ex:
-        print("Error in update_log_excel_file="+str(ex))
-        return False
-    
-def string_extract_only_alphabets(inputString=""):
-    """
-    Returns only alphabets from given input string
-    """
-    if not inputString:
-        inputString = gui_get_any_input_from_user("Input String")
-
-    outputStr = ''.join(e for e in inputString if e.isalpha())
-    return outputStr 
-
-def string_extract_only_numbers(inputString=""):
-    """
-    Returns only numbers from given input string
-    """
-    if not inputString:
-        inputString = gui_get_any_input_from_user("Input String")
-
-    outputStr = ''.join(e for e in inputString if e.isnumeric())
-    return outputStr   
 
 def window_show_desktop():
     """
@@ -1094,7 +1415,7 @@ def window_activate_and_maximize(windowName=""):
     """
     try:
         if not windowName:
-            windowName = gui_get_any_input_from_user("Window Name")
+            windowName = gui_get_any_input_from_user("window name to Activate & Maximize")
 
         item,window_found = _window_find_exact_name(windowName)
         if window_found:
@@ -1117,8 +1438,8 @@ def window_minimize(windowName=""):
     """
     try:
         if not windowName:
-            windowName = gui_get_any_input_from_user("Window Name")
-
+            windowName = gui_get_any_input_from_user("window name to Minimize")
+            
         item,window_found = _window_find_exact_name(windowName)
         if window_found:
             windw = gw.getWindowsWithTitle(item)[0]
@@ -1138,7 +1459,7 @@ def window_close(windowName=""):
     """
     try:
         if not windowName:
-            windowName = gui_get_any_input_from_user("Window Name")
+            windowName = gui_get_any_input_from_user("window name to Close")
 
         item,window_found = _window_find_exact_name(windowName)
         if window_found:
@@ -1149,20 +1470,135 @@ def window_close(windowName=""):
             print("No window available to close, by name="+str(windowName))
     except Exception as ex:
         print("Error in window_close="+str(ex))
+
+def launch_any_exe_bat_application(pathOfExeFile=""):
+    """
+    Launches any exe or batch file.
+
+    Parameters:
+        pathOfExeFile  (str) : location of the file with extension.
+    """
+    try:
+        if not pathOfExeFile:
+            pathOfExeFile = gui_get_any_file_from_user('EXE or BAT file')
+
+        subprocess.Popen(pathOfExeFile)
+        time.sleep(1) 
+        window_activate_and_maximize(pathOfExeFile)
+        time.sleep(1) 
+    except Exception as ex:
+        print("ERROR in launch_any_exe_bat_application="+str(ex))
     
+class myThread1 (threading.Thread):
+    def __init__(self,err_str):
+        threading.Thread.__init__(self)
+        self.err_str = err_str
+
+    def run(self):
+        message_flash(self.err_str)
+
+class myThread2 (threading.Thread):
+    def __init__(self,strFilePath):
+        threading.Thread.__init__(self)
+        self.strFilePath = strFilePath
+
+    def run(self):
+        time.sleep(1)
+        img = pg.screenshot()
+        time.sleep(1)
+
+        dt_tm= str(datetime.datetime.now())    
+    
+        dt_tm = dt_tm.replace(" ","_")
+        dt_tm = dt_tm.replace(":","-")
+        dt_tm = dt_tm.split(".")[0]
+        filePath = self.strFilePath + str(dt_tm)  + ".PNG"
+
+        img.save(str(filePath))
+        
+def take_error_screenshot(err_str):
+    """
+    Takes screenshot of an error popup parallely without waiting for the flow of the program.
+    The screenshot will be saved in the log folder for reference.
+
+    Parameters:
+        err_str  (str) : exception.
+    """
+    global error_screen_shots_path
+    try:
+        thread1 = myThread1(err_str)
+        thread2 = myThread2(error_screen_shots_path)
+
+        thread1.start()
+        thread2.start()
+
+        thread1.join()
+        thread2.join()
+    except Exception as ex:
+        print("Error in take_error_screenshot="+str(ex))
+    
+def update_log_excel_file(message=""):
+    """
+    Given message will be updated in the excel log file.
+
+    Parameters:
+        message  (str) : message to update.
+
+    Retursn:
+        returns a boolean true if updated sucessfully
+    """
+    global fullPathToStatusLogFile
+    try:
+        if not message:
+            message = gui_get_any_input_from_user("message to Update Log file")
+
+        df = pd.DataFrame({'Timestamp': [datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")], 'Status':[message]})
+        writer = pd.ExcelWriter(fullPathToStatusLogFile, engine='openpyxl')
+        writer.book = load_workbook(fullPathToStatusLogFile)
+        writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
+    
+        reader = pd.read_excel(fullPathToStatusLogFile)
+        df.to_excel(writer,index=False,header=False,startrow=len(reader)+1)
+        writer.close()
+
+        print("Message updated at the row ")
+        return True
+    except Exception as ex:
+        print("Error in update_log_excel_file="+str(ex))
+        return False
+    
+def string_extract_only_alphabets(inputString=""):
+    """
+    Returns only alphabets from given input string
+    """
+    if not inputString:
+        inputString = gui_get_any_input_from_user("input String")
+
+    outputStr = ''.join(e for e in inputString if e.isalpha())
+    return outputStr 
+
+def string_extract_only_numbers(inputString=""):
+    """
+    Returns only numbers from given input string
+    """
+    if not inputString:
+        inputString = gui_get_any_input_from_user("input String")
+
+    outputStr = ''.join(e for e in inputString if e.isnumeric())
+    return outputStr       
 @lru_cache(None)
 def call_otsu_threshold(img_title, is_reduce_noise=False):
     """
     OpenCV internal function for OCR
     """
-    # Read the image in a greyscale mode
+    
     image = cv2.imread(img_title, 0)
 
-    # Apply GaussianBlur to reduce image noise if it is required
+    
     if is_reduce_noise:
         image = cv2.GaussianBlur(image, (5, 5), 0)
 
-    # Optimal threshold value is determined automatically.otsu_threshold
+    
     _ , image_result = cv2.threshold(
         image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU,
     )
@@ -1196,9 +1632,14 @@ def ocr_get_coordinates(img_path=""):
     Gets the coordinates for performing OCR on that specific region
     """
     try:
-        if not img_path:
-            img_path = gui_get_any_file_from_user(Extension_Without_Dot="PNG")
+        ocr_path = os.path.join(img_folder_path,'OCR_Screenshot_1.png')
 
+        if not img_path:
+            message_counter_down_timer(start_value=5)
+
+            img = pg.screenshot()
+            img.save(ocr_path)
+            img_path = ocr_path        
         if img_path and os.path.exists(img_path):
             frame=read_image_cv2(img_path)
 
@@ -1221,7 +1662,7 @@ def ocr_get_coordinates(img_path=""):
         print("Error in ocr_get_coordinates="+str(ex))
     
 # @timeit
-def ocr_magic(img_path,x,y,w,h): #CROP specific part
+def ocr_magic(img_path="",x=0,y=0,w=0,h=0): #CROP specific part
     """
     Coverts the given co-ordinates /bounds of an image to OCR text. Capture the bounds using ocr_get_coordinates 
 
@@ -1233,7 +1674,31 @@ def ocr_magic(img_path,x,y,w,h): #CROP specific part
         data      (str) : the OCR processed string.
     """
     try:
-        r = (x, y, w, h) 
+
+        x_y_w_h = ""
+
+        if x == 0 and y==0:
+            x_y_w_h = gui_get_any_input_from_user('OCR coordinates in this format (with comma) X,Y,W,H')
+            
+            if x_y_w_h:
+                x,y,w,h = str(x_y_w_h).split(",")
+                x = int(x)
+                y = int(y)
+                w = int(w)
+                h = int(h)
+
+        r = (x, y, w, h)
+
+        ocr_path = os.path.join(img_folder_path,'OCR_Screenshot.png')
+
+        if not img_path:
+            # message_counter_down_timer(start_value=3)
+
+            img = pg.screenshot()
+            img.save(ocr_path)
+            img_path =ocr_path
+        
+
         image = read_image_cv2(img_path)
         img_cropped = image[int(r[1]):int(r[1]+r[3]), int(r[0]):int(r[0]+r[2])]
 
@@ -1265,7 +1730,7 @@ def excel_get_row_column_count(excel_path="", sheet_name="Sheet1", header=0):
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+                excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user("to get row/column count")
             
         df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header)
         row, col = df.shape
@@ -1290,7 +1755,7 @@ def excel_copy_range_from_sheet(excel_path="",*, sheet_name='Sheet1', startCol=1
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to copy range from')
             
         from_wb = load_workbook(filename = excel_path)
         try:
@@ -1322,7 +1787,7 @@ def excel_paste_range_to_sheet(excel_path="",*, sheet_name='Sheet1', startCol=1,
     try:
         try:
             if not excel_path:
-                excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+                excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to paste range into')
                 
             to_wb = load_workbook(filename = excel_path)
             toSheet = to_wb[sheet_name]
@@ -1383,23 +1848,25 @@ def _excel_paste_range(startCol=1, startRow=1, endCol=1, endRow=1, sheetReceivin
 
     except Exception as ex:
         print("Error in _excel_paste_range="+str(ex))
-    
+
 def excel_split_by_column(excel_path="",*,sheet_name='Sheet1',header=0,columnName=""):
     """
     Splits the excel file by Column Name
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to split by column')
             
         if not columnName:
-            columnName = gui_get_any_input_from_user("Column Name")
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+            columnName = gui_get_dropdownlist_values_from_user('this list of Columns (to split)',col_lst)
 
         data_df = pd.read_excel(excel_path,sheet_name=sheet_name,header=header,dtype=str)
+        
         grouped_df = data_df.groupby(columnName)
-
+        
         for data in  grouped_df:  
-            grouped_df.get_group(data[0]).to_excel(excel_path[:excel_path.rindex("\\")] + "\\" + str(data[0]) + ".xlsx", index=False)
+            grouped_df.get_group(data[0]).to_excel(os.path.join(output_folder_path,str(data[0]) + ".xlsx"), index=False)
 
     except Exception as ex:
         print("Error in excel_split_by_column="+str(ex))
@@ -1410,13 +1877,13 @@ def excel_split_the_file_on_row_count(excel_path="",*, sheet_name = 'Sheet1', ro
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, _ = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, _ = gui_get_excel_sheet_header_from_user('to split on row count')
             
         if not rowSplitLimit:
-            rowSplitLimit = int(gui_get_any_input_from_user("Row Split Count/Limit Ex: 20"))
+            rowSplitLimit = int(gui_get_any_input_from_user("row split Count/Limit Ex: 20"))
 
         if not outputFolderPath:
-            outputFolderPath = gui_get_folder_path_from_user()
+            outputFolderPath = gui_get_folder_path_from_user('output folder to Save split excel files')
 
         src_wb = op.load_workbook(excel_path)
         src_ws = src_wb.worksheets[0] 
@@ -1456,10 +1923,10 @@ def excel_merge_all_files(fullPathOfTheFolder="",outputFolderPath=""):
     """
     try:
         if not fullPathOfTheFolder:
-            fullPathOfTheFolder = gui_get_folder_path_from_user()
+            fullPathOfTheFolder = gui_get_folder_path_from_user('input folder to MERGE files from')
 
         if not outputFolderPath:
-            outputFolderPath = gui_get_folder_path_from_user()
+            outputFolderPath = gui_get_folder_path_from_user('output folder to store Final merged file')
         
         filelist = [ f for f in os.listdir(fullPathOfTheFolder) if f.endswith(".xlsx") ]
         all_excel_file_lst = []
@@ -1471,29 +1938,36 @@ def excel_merge_all_files(fullPathOfTheFolder="",outputFolderPath=""):
 
         appended_df = pd.concat(all_excel_file_lst)
         time_stamp_now=datetime.datetime.now().strftime("%m-%d-%Y")
-        final_path= outputFolderPath + "\\Final-" + time_stamp_now + ".xlsx"
+        final_path= os.path.join(outputFolderPath, "Final-" + time_stamp_now + ".xlsx")
         appended_df.to_excel(final_path, index=False)
-        print("Files Merged....")
+        
         return True
     except Exception as ex:
         print("Error in excel_merge_all_files="+str(ex))
-    
-def excel_drop_columns(txtFilePath,columnsToBeDropped):
+
+def excel_drop_columns(excel_path="", sheet_name='Sheet1', header=0, columnsToBeDropped = ""):
     """
     Drops the desired column from the given excel file
     """
     try:
-        df = pd.read_excel(txtFilePath) 
+        if not excel_path:
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('input excel to Drop the columns from')
+
+        if not columnsToBeDropped:
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+            columnsToBeDropped = gui_get_dropdownlist_values_from_user('columns list to drop',col_lst) 
+
+        df=pd.read_excel(excel_path,sheet_name=sheet_name, header=header)
 
         if isinstance(columnsToBeDropped, list):
             df.drop(columnsToBeDropped, axis = 1, inplace = True) 
         else:
             df.drop([columnsToBeDropped], axis = 1, inplace = True) 
 
-        df.to_excel(txtFilePath,index=False)
+        df.to_excel(excel_path,index=False)
     except Exception as ex:
         print("Error in excel_drop_columns="+str(ex))
-    
+
 def excel_sort_columns(excel_path="",*,sheet_name='Sheet1',header=0,firstColumnToBeSorted=None,secondColumnToBeSorted=None,thirdColumnToBeSorted=None,firstColumnSortType=True,secondColumnSortType=True,thirdColumnSortType=True):
     """
     A function which takes excel full path to excel and column names on which sort is to be performed
@@ -1501,8 +1975,18 @@ def excel_sort_columns(excel_path="",*,sheet_name='Sheet1',header=0,firstColumnT
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to sort the column')
+
+        if not firstColumnToBeSorted:
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+            usecols = gui_get_dropdownlist_values_from_user('minimum 1 and maximum 3 columns to sort',col_lst)
             
+            if len(usecols) == 3:
+                firstColumnToBeSorted , secondColumnToBeSorted , thirdColumnToBeSorted = usecols
+            elif len(usecols) == 2:
+                firstColumnToBeSorted , secondColumnToBeSorted = usecols
+            elif len(usecols) == 1:
+                firstColumnToBeSorted = usecols[0]
         df=pd.read_excel(excel_path,sheet_name=sheet_name, header=header)
         if thirdColumnToBeSorted is not None and secondColumnToBeSorted is not None and firstColumnToBeSorted is not None:
             df=df.sort_values([firstColumnToBeSorted,secondColumnToBeSorted,thirdColumnToBeSorted],ascending=[firstColumnSortType,secondColumnSortType,thirdColumnSortType])
@@ -1513,11 +1997,17 @@ def excel_sort_columns(excel_path="",*,sheet_name='Sheet1',header=0,firstColumnT
         elif firstColumnToBeSorted is not None:
             df=df.sort_values([firstColumnToBeSorted],ascending=[firstColumnSortType])
 
-        df.to_excel(excel_path,index=False)
-        print("Sorted")
-        # return True
+        writer = pd.ExcelWriter(excel_path, engine='openpyxl')
+        writer.book = load_workbook(excel_path)
+        writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
+    
+        df.to_excel(writer,sheet_name=sheet_name,index=False)
+
+        writer.save()
+        writer.close()    
+        return True
     except Exception as ex:
-        print("Error in excel_sort_columns="+str(ex))
+        print("Error in excel_sort_columns="+str(ex))        
     
 def excel_clear_sheet(excel_path="",sheet_name="Sheet1", header=0):
     """
@@ -1525,76 +2015,85 @@ def excel_clear_sheet(excel_path="",sheet_name="Sheet1", header=0):
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to clear the sheet')
 
         df = pd.read_excel(excel_path,sheet_name=sheet_name,header=header) 
         df = df.head(0)
 
-        with pd.ExcelWriter(excel_path, engine='openpyxl', mode='a') as writer:
+        with pd.ExcelWriter(excel_path, engine='openpyxl', mode='w') as writer:
             df.to_excel(writer, index=False, sheet_name=sheet_name)
 
         # writer = pd.ExcelWriter(excel_path, engine='openpyxl')
         # writer.book = load_workbook(excel_path)
         # writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
-    
-        # # reader = pd.read_excel(excel_path)
-        # df.to_excel(writer, index=False,startrow=0)
-        writer.close()
+
+        # df.to_excel(writer,sheet_name=sheet_name,index=False)
+
+        # writer.save()
+        # writer.close()
 
     except Exception as ex:
         print("Error in excel_clear_sheet="+str(ex))
-    
+
 def excel_set_single_cell(excel_path="", *, sheet_name="Sheet1", header=0, columnName="", cellNumber=0, setText=""): 
     """
     Writes the given text to the desired column/cell number for the given excel file
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to set cell')
             
         if not columnName:
-            columnName = gui_get_any_input_from_user("Column Name")
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+            columnName = gui_get_dropdownlist_values_from_user('list of columns to set vlaue',col_lst,multi_select=False)   
 
         if not setText:
-            setText = gui_get_any_input_from_user("Text Value")
+            setText = gui_get_any_input_from_user("text value to set the cell")
 
         df = pd.read_excel(excel_path,sheet_name=sheet_name,header=header)
-        Filepath_writer = pd.ExcelWriter(excel_path)
+        
+        writer = pd.ExcelWriter(excel_path, engine='openpyxl')
+        writer.book = load_workbook(excel_path)
+        writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
+        
         df.at[cellNumber,columnName] = setText
-        df.to_excel(Filepath_writer, sheet_name=sheet_name ,index=False)    
-        Filepath_writer.save()
+        df.to_excel(writer, sheet_name=sheet_name ,index=False)    
+        writer.save()
+        writer.close()
         return True
 
     except Exception as ex:
         print("Error in excel_set_single_cell="+str(ex))
-    
-def excel_get_single_cell(excel_path="",*,sheet_name="Sheet1",header=0, columnNames="",cellNumber=0): 
+
+def excel_get_single_cell(excel_path="",*,sheet_name="Sheet1",header=0, columnName="",cellNumber=0): 
     """
     Gets the text from the desired column/cell number of the given excel file
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to get cell')
             
-        if not columnNames:
-            columnNames = gui_get_any_input_from_user("Column Name")
+        if not columnName:
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+            columnName = gui_get_dropdownlist_values_from_user('list of columns to get vlaue',col_lst,multi_select=False)   
 
-        df = pd.read_excel(excel_path,sheet_name=sheet_name,header=header,usecols={columnNames})
-        cellValue = df.at[cellNumber,columnNames]
+        df = pd.read_excel(excel_path,sheet_name=sheet_name,header=header,usecols={columnName[0]})
+        cellValue = df.at[cellNumber,columnName[0]]
         return cellValue
     except Exception as ex:
         print("Error in excel_get_single_cell="+str(ex))
-    
+
 def excel_remove_duplicates(excel_path="", *, sheet_name="Sheet1", header=0, columnName="", saveResultsInSameExcel=True, which_one_to_keep="first"): 
     """
     Drops the duplicates from the desired Column of the given excel file
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to remove duplicates')
             
         if not columnName:
-            columnName = gui_get_any_input_from_user("Column Name")
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+            columnName = gui_get_dropdownlist_values_from_user('list of columns to remove duplicates',col_lst)  
 
         df = pd.read_excel(excel_path, sheet_name=sheet_name,header=header) 
         count = 0 
@@ -1619,14 +2118,15 @@ def excel_vlook_up(filepath_1="", *, sheet_name_1 = 'Sheet1', header_1 = 0, file
     """
     try:
         if not filepath_1:
-            filepath_1, sheet_name_1, header_1 = gui_get_excel_sheet_header_from_user()
+            filepath_1, sheet_name_1, header_1 = gui_get_excel_sheet_header_from_user('(Vlookup) first excel')
              
         if not filepath_2:
-            filepath_2, sheet_name_2, header_2 = gui_get_excel_sheet_header_from_user()
+            filepath_2, sheet_name_2, header_2 = gui_get_excel_sheet_header_from_user('(Vlookup) second excel')
             
         if not match_column_name:
-            match_column_name = gui_get_any_input_from_user("Column Name To Be Matched")
-
+            col_lst = excel_get_all_header_columns(filepath_1, sheet_name_1, header_1)
+            match_column_name = gui_get_dropdownlist_values_from_user('Vlookup column name to be matched',col_lst,multi_select=False) 
+            match_column_name = match_column_name[0]
         df1 = pd.read_excel(filepath_1, sheet_name = sheet_name_1, header = header_1)
         df2 = pd.read_excel(filepath_2, sheet_name = sheet_name_2, header = header_2)
 
@@ -1675,8 +2175,9 @@ def scrape_save_contents_to_notepad(folderPathToSaveTheNotepad=""): #"Full path 
     """
     try:
         if not folderPathToSaveTheNotepad:
-            folderPathToSaveTheNotepad = gui_get_folder_path_from_user()
+            folderPathToSaveTheNotepad = gui_get_folder_path_from_user('folder to save notepad contents')
 
+        message_counter_down_timer(3)
         time.sleep(1)
         screen_size=pg.size()
         pg.click(screen_size[0]/2,screen_size[1]/2)
@@ -1697,11 +2198,12 @@ def scrape_save_contents_to_notepad(folderPathToSaveTheNotepad=""): #"Full path 
         else:
             notepad_file_path = folderPathToSaveTheNotepad + "\\notepad-contents.txt"
 
-        f = open(notepad_file_path, "w")
+        f = open(notepad_file_path, "w", encoding="utf-8")
         f.write(clipboard_data)
         time.sleep(10)
         f.close()
 
+        clipboard_data = ''
         return "Saved the contents at " + notepad_file_path
     except Exception as ex:
         print("Error in scrape_SaveContentsToNotepad = "+str(ex))
@@ -1709,11 +2211,12 @@ def scrape_save_contents_to_notepad(folderPathToSaveTheNotepad=""): #"Full path 
 def scrape_get_contents_by_search_copy_paste(highlightText=""):
     """
     Gets the focus on the screen by searching given text using crtl+f and performs copy/paste of all data. Useful in Citrix applications
+    This is useful in Citrix applications
     """
     output_lst_newline_removed = []
     try:
         if not highlightText:
-            highlightText = gui_get_any_input_from_user("Text to be Searched")
+            highlightText = gui_get_any_input_from_user("text to be searched in Citrix environment")
 
         time.sleep(1)
         kb.press_and_release("ctrl+f")
@@ -1741,6 +2244,7 @@ def scrape_get_contents_by_search_copy_paste(highlightText=""):
             if line.strip():
                 output_lst_newline_removed.append(line.strip())
 
+        clipboard_data = ''
         return output_lst_newline_removed
     except Exception as ex:
         print("Error in scrape_get_contents_by_search_copy_paste="+str(ex))
@@ -1751,14 +2255,14 @@ def mouse_move(x="",y=""):
     """
     try:
         if not x and not y:
-            x_y = str(gui_get_any_input_from_user("Values ex: 200,215"))
+            x_y = str(gui_get_any_input_from_user("X,Y co-ordinates to the move Mouse to. Ex: 200,215"))
             if "," in x_y:
                 x, y = x_y.split(",")
                 x = int(x)
                 y = int(y)
             else:
-                message_pop_up("Please enter like 200,300")
-
+                x = x_y.split(" ")[0]
+                y = x_y.split(" ")[1]
         if x and y:
             time.sleep(0.2)
             pg.moveTo(x,y)
@@ -1772,10 +2276,12 @@ def mouse_get_color_by_position(pos=[]):
     """
     try:
         if not pos:
-            pos = gui_get_any_input_from_user("Values ex: 200,215")
+            pos1 = gui_get_any_input_from_user("X,Y co-ordinates to get its color. Ex: 200,215")
+            pos = tuple(map(int, pos1.split(',')))
 
         im = pg.screenshot()
-        return im.getpixel((pos[0],pos[1]))
+        time.sleep(0.5)
+        return im.getpixel(pos)    
     except Exception as ex:
         print("Error in mouse_get_color_by_position = "+str(ex))
     
@@ -1786,13 +2292,14 @@ def mouse_click(x="", y="", left_or_right="left", single_double_triple="single",
     """
     try:
         if not x and not y:
-            x_y = str(gui_get_any_input_from_user("Values ex: 200,215"))
+            x_y = str(gui_get_any_input_from_user("X,Y co-ordinates to perform Mouse (Left) Click. Ex: 200,215"))
             if "," in x_y:
                 x, y = x_y.split(",")
                 x = int(x)
                 y = int(y)
             else:
-                message_pop_up("Please enter like 200,300")
+                x = x_y.split(" ")[0]
+                y = x_y.split(" ")[1]
 
         copiedText = ""
         time.sleep(1)
@@ -1824,19 +2331,19 @@ def mouse_drag_from_to(X1="",Y1="",X2="",Y2="",delay=0.5):
     Clicks and drags from X1 Y1 co-ordinates to X2 Y2 Co-ordinates on the screen
     """
     try:
+        if not X1 and not Y1:
+            x_y = str(gui_get_any_input_from_user("Mouse Drag FROM Values ex: 200,215"))
+            if "," in x_y:
+                X1, Y1 = x_y.split(",")
+                X1 = int(X1)
+                Y1 = int(Y1)
 
-        x_y = str(gui_get_any_input_from_user("FROM Values ex: 200,215"))
-        if "," in x_y:
-            X1, Y1 = x_y.split(",")
-            X1 = int(X1)
-            Y1 = int(Y1)
-
-        x_y = str(gui_get_any_input_from_user("TO Values ex: 200,215"))
-        if "," in x_y:
-            X2, Y2 = x_y.split(",")
-            X2 = int(X2)
-            Y2 = int(Y2)
-
+        if not X2 and not Y2:
+            x_y = str(gui_get_any_input_from_user("Mouse Drag TO Values ex: 200,215"))
+            if "," in x_y:
+                X2, Y2 = x_y.split(",")
+                X2 = int(X2)
+                Y2 = int(Y2)
         time.sleep(0.2)
         pg.moveTo(X1,Y1,duration=delay)
         pg.dragTo(X2,Y2,duration=delay,button='left')
@@ -1847,10 +2354,11 @@ def mouse_drag_from_to(X1="",Y1="",X2="",Y2="",delay=0.5):
 def search_highlight_tab_enter_open(searchText="",hitEnterKey="Yes"):
     """
     Searches for a text on screen using crtl+f and hits enter.
+    This function is useful in Citrix environment
     """
     try:
         if not searchText:
-            searchText = gui_get_any_input_from_user("Search Text")
+            searchText = gui_get_any_input_from_user("Search Text to Highlight (in Citrix Environment)")
 
         time.sleep(0.5)
         kb.press_and_release("ctrl+f")
@@ -1878,8 +2386,8 @@ def key_press(strKeys=""):
     Emulates the given keystrokes.
     """
     try:
-        if not strKeys:
-            strKeys = gui_get_any_input_from_user("Keys")
+        if not strKeys:            
+            strKeys = gui_get_any_input_from_user("keys combination using + as delimeter. Ex: ctrl+O")
 
         strKeys = strKeys.lower()
         if "shift" in strKeys:
@@ -1897,7 +2405,7 @@ def key_write_enter(strMsg="",delay=1,key="e"):
     """
     try:
         if not strMsg:
-            strMsg = gui_get_any_input_from_user("Message")
+            strMsg = gui_get_any_input_from_user("message / username / any text")
 
         time.sleep(0.2)
         kb.write(strMsg)
@@ -1909,12 +2417,14 @@ def key_write_enter(strMsg="",delay=1,key="e"):
         time.sleep(1)
     except Exception as ex:
         print("Error in key_write_enter="+str(ex))
-    
-def date_convert_to_US_format(input_str):
+
+def date_convert_to_US_format(input_str=""):
     """
     Converts the given date to US date format.
     """
     try:
+        if not input_str:
+            input_str = gui_get_any_input_from_user('Date value Ex: 01/01/2021')
         match = re.search(r'\d{4}-\d{2}-\d{2}', input_str) #1
         if match == None:
             match = re.search(r'\d{2}-\d{2}-\d{4}', input_str) #2
@@ -1943,13 +2453,13 @@ def date_convert_to_US_format(input_str):
     except Exception as ex:
         print("Error in date_convert_to_US_format="+str(ex))
     
-def mouse_search_snip_return_coordinates_x_y(img="", conf=0.9, wait=180,region=(0,0,1366,768)): #180
+def mouse_search_snip_return_coordinates_x_y(img="", conf=0.9, wait=180,region=(0,0,pg.size()[0],pg.size()[1])): #180
     """
     Searches the given image on the screen and returns its center of X Y co-ordinates.
     """
     try:
         if not img:
-            img = gui_get_any_file_from_user(".PNG")
+            img = gui_get_any_file_from_user("snip image file, to get X,Y coordinates","png")
 
         time.sleep(1)
         pos = pg.locateOnScreen(img,confidence=conf,region=region) 
@@ -1971,34 +2481,7 @@ def mouse_search_snip_return_coordinates_x_y(img="", conf=0.9, wait=180,region=(
         return pos
     except Exception as ex:
         print("Error in mouse_search_snip_return_coordinates_x_y="+str(ex))
-    
-def is_text_found_on_screen(searchText="",successImg="Full path to image",conf=0.8, delay=15):
-    """
-    Finds if a text is available on screen.
-    """
-    try:
-        if not searchText:
-            searchText = gui_get_any_input_from_user("Search Text")
 
-        time.sleep(1)
-        kb.press_and_release("ctrl+f")
-        time.sleep(1)
-        kb.write(searchText)
-        time.sleep(1)
-        kb.press_and_release("enter")
-        time.sleep(1)
-
-        pos = mouse_search_snip_return_coordinates_x_y(successImg,conf,delay) 
-        found = False
-
-        if pos != None:
-            found = True
-            
-        kb.press_and_release("esc")
-        time.sleep(1)
-        return found
-    except Exception as ex:
-        print("Error in is_text_found_on_screen="+str(ex))
     
 def find_text_on_screen(searchText="",delay=0.1, occurance=1,isSearchToBeCleared=False):
     """
@@ -2007,7 +2490,7 @@ def find_text_on_screen(searchText="",delay=0.1, occurance=1,isSearchToBeCleared
     screen_clear_search() #default
 
     if not searchText:
-        searchText = gui_get_any_input_from_user("Search Text")
+        searchText = gui_get_any_input_from_user("search text to Find on screen")
 
     time.sleep(delay)
     kb.press_and_release("ctrl+f")
@@ -2025,11 +2508,13 @@ def find_text_on_screen(searchText="",delay=0.1, occurance=1,isSearchToBeCleared
     if isSearchToBeCleared:
         screen_clear_search()
 
-def mouse_search_snip_return_coordinates_box(img, conf=0.9, wait=180,region=(0,0,pg.size()[0],pg.size()[1])):
+def mouse_search_snip_return_coordinates_box(img="", conf=0.9, wait=180,region=(0,0,pg.size()[0],pg.size()[1])):
     """
     Searches the given image on the screen and returns the 4 bounds co-ordinates (x,y,w,h)
     """
     try:
+        if not img:
+            img = gui_get_any_file_from_user("snip image file, to get BOX coordinates","png")
         time.sleep(1)
         
         pos = pg.locateOnScreen(img,confidence=conf,region=region) 
@@ -2044,14 +2529,15 @@ def mouse_search_snip_return_coordinates_box(img, conf=0.9, wait=180,region=(0,0
 
     except Exception as ex:
         print("Error in mouse_search_snip_return_coordinates_box="+str(ex))
-    
-def mouse_find_highlight_click(searchText,delay=0.1,occurance=1):
+
+def mouse_find_highlight_click(searchText="",delay=0.1,occurance=1):
     """
     Searches the given text on the screen, highlights and clicks it.
     """  
     try:
         if not searchText:
-            searchText = gui_get_any_input_from_user("Search Text")
+            searchText = gui_get_any_input_from_user("search text to Highlight & Click")
+
 
         time.sleep(0.2)
 
@@ -2112,130 +2598,151 @@ def _start_chrome_service(dp=False,dn=True,igc=True,smcp=True,i=False,h=False,wh
         chrome_driver_path = which(chromedriver_autoinstaller.utils.get_chromedriver_filename())
         service = Service(chrome_driver_path)
         service.start()
-        
+
+        #False
         if dp:
-            options.add_argument("--disable-popup-blocking")                #False
+            options.add_argument("--disable-popup-blocking")   
+        #True             
         if dn:  
-            options.add_argument("--disable-notifications")                 #True
+            options.add_argument("--disable-notifications")          
+        #True       
         if igc:
-            options.add_argument("--ignore-certificate-errors")             #True
+            options.add_argument("--ignore-certificate-errors")    
+        #True         
         if smcp:
-            options.add_argument("--suppress-message-center-popups")        #True
+            options.add_argument("--suppress-message-center-popups")        
+        #False
         if i:
-            options.add_argument("--incognito")                             #False
+            options.add_argument("--incognito")     
+        #False                        
         if h:
-            options.add_argument("--headless")                              #False
+            options.add_argument("--headless")                              
             options.add_argument("--disable-gpu")
         
         if whtsp :
             options.add_argument("--user-data-dir={}".format(profile_path))
             options.add_argument('--profile-directory=Profile 108')        
         options.add_argument("--disable-translate")
-        options.add_argument("--start-maximized")                           #True
-        options.add_argument("--ignore-autocomplete-off-autofill")          #True
-        options.add_argument("--no-first-run")                              #True
+        #True
+        options.add_argument("--start-maximized")                           
+        #True
+        options.add_argument("--ignore-autocomplete-off-autofill")          
+        #True
+        options.add_argument("--no-first-run")             
         #options.add_argument("--window-size=1920,1080")
         
         driver = webdriver.Remote(service.service_url,options=options)
     except Exception as ex:
         print("Error in _start_chrome_service = "+str(ex))
         driver.quit
+        
+
     
-def browser_title_s(bd="t"):
-    """
-    Gives you the current browser tilte or handle.
-    """
-    try:
-        if bd.lower() == "t" :              #Get browser Title
-            return driver.title
-        if bd.lower() == "wh" :             #Get Browser Handles
-            return driver.window_handles
-    except Exception as ex:
-        print("Error in browser_title_s = "+str(ex))
-        return None
-    
-def browser_page_source_html_s():
+def browser_get_page_source_html():
     """
     Gets the complete html page source of the given page as string.
     """
     try:
-        return driver.page_source           #Get whole HTML Source in the page as List
+        #Get whole HTML Source in the page as List
+        return driver.page_source           
     except Exception as ex:
-        print("Error in browser_page_source_html_s = "+str(ex))
+        print("Error in browser_get_page_source_html = "+str(ex))
     
-def browser_page_source_text_s():
+def browser_get_page_source_text():
     """
     Gets complete text of the given page as list.
     """
-    try:                                     #Get whole text in the page as List
+    try:                                     
+        #Get whole text in the page as List
         text_items = []
         data = driver.find_elements_by_tag_name('html')
         for item in data:
             text_items.append(item.text)
         return text_items
     except Exception as ex:
-        print("Error in browser_page_source_text_s = "+str(ex))
-    
+        print("Error in browser_get_page_source_text = "+str(ex))
+
 def browser_navigate_s(nav):
     """
     Navigates to given url or goes forward, backward or refresh according to the specified argument.
     """
     try:
         if len(nav) >5 :
-            driver.get(nav)                 #Navigate to URL
+            #Navigate to URL
+            driver.get(nav)                 
             return
-        if nav.lower() == "b" :             #Navigate Back
+        if nav.lower() == "b" :             
+            #Navigate Back
             driver.back()
             return
-        if nav.lower() == "f" :             #Navigate Forward 
+        if nav.lower() == "f" :       
+            #Navigate Forward       
             driver.forward()
             return
-        if nav.lower() == "r" :             #Refresh Page
+        if nav.lower() == "r" :    
+            #Refresh Page         
             driver.refresh()
             return
     except Exception as ex:
         print("Error in browser_navigate_s = "+str(ex))
         driver.quit()
-    
-def browser_locate_element_s(element,xpath="xpath"):   
+        Chrome_Service_Started = False
+
+#returns a single element    
+def browser_locate_element_s(element="",type_="xpath"):   
     """
     Locates the XPATH element on screen and returns the element.
     """
-    try:                                                                 #returns a single element
-        if xpath.lower() == "xpath":                                            
-            element1 = driver.find_element_by_xpath(element)                #find by Xpath
+    try:                                                 
+        if not element:
+            element = gui_get_any_input_from_user('browser Element to locate (Selenium)')
+
+        if type_.lower() == "xpath":                                        
+            #find by Xpath    
+            element1 = driver.find_element_by_xpath(element)                
             return element1 
-        if xpath.lower() == "href":
-            element1 = driver.find_element_by_link_text(element)            #find by link text href
+        if type_.lower() == "href":
+            element1 = driver.find_element_by_link_text(element)  
+            #find by link text href          
             return element1
-        if xpath.lower() == "css":                                          #find by css selector
+        if type_.lower() == "css":               
+            #find by css selector                           
             element1 = driver.find_element_by_css_selector(element)
             return element1
     except Exception as ex:
         print("Error in browser_locate_element_s = "+str(ex))
-    
-def browser_locate_elements_s(element,xpath="xpath"):                            #returns multiple elements as a list
+
+#returns multiple elements as a list
+def browser_locate_elements_s(element="",type_="xpath"):                            
     """
     Locates the XPATH elements on screen and return the elements.
     """
     try:
-        if xpath.lower() == "xpath":
+        if not element:
+            element = gui_get_any_input_from_user('browser ElementS to locate (Selenium)')
+
+        if type_.lower() == "xpath":
             elements = driver.find_elements_by_xpath(element)               
             return elements
-        if xpath.lower() == "href":
-            elements = driver.find_element_by_link_text(element)            #find by link text href
+        if type_.lower() == "href":
+            #find by link text href
+            elements = driver.find_element_by_link_text(element)            
             return elements
-        if xpath.lower() == "css":                                          #find by css selector
+        if type_.lower() == "css":          
+            #find by css selector                                
             elements = driver.find_element_by_css_selector(element)
             return elements
     except Exception as ex:
         print("Error in browser_locate_elements_s = "+str(ex))
-    
-def browser_mouse_click_s(element,i="c"):   
+
+#Click or Send enter key to the element
+def browser_mouse_click_s(element="",i="c"):   
     """
     Clicks on given web element using XPath
     """
-    try:                                                                #Click or Send enter key to the element
+    try:                                              
+        if not element:
+            element = gui_get_any_input_from_user('browser element for Mouse Click')
         if i == "c":
             element.click()                                                 
             return
@@ -2245,16 +2752,23 @@ def browser_mouse_click_s(element,i="c"):
     except Exception as ex:
         print("Error in browser_mouse_click_s = "+str(ex))
     
-def browser_write_s(element,write):
+def browser_write_s(element="",write=""):
     try:
-        element.send_keys(write)                                            #write text in text feilds
+        if not element:
+            element = gui_get_any_input_from_user('browser Element to Write to')
+
+        if not write:
+            write = gui_get_any_input_from_user('Text value to write to browser element')
+
+        #write text in text fields
+        element.send_keys(write)                
         return
     except Exception as ex:
         print("Error in browser_write_s = "+str(ex))
     
 def browser_wait_s():
     try:
-        driver.implicitly_wait(60)
+        driver.implicitly_wait(120)
         return
     except Exception as ex:
         print("Error in browser_wait_s = "+str(ex))
@@ -2267,7 +2781,7 @@ def launch_website_s(URL1="",dp=False,dn=True,igc=True,smcp=True,i=False,h=False
 
     try:
         if not URL1:
-            URL1 = gui_get_any_input_from_user("Website URL like https://www.google.com")
+            URL1 = gui_get_any_input_from_user("website URL to Launch Website using Selenium. Ex https://www.google.com")
 
         if not Chrome_Service_Started: 
             _start_chrome_service(dp=dp,dn=dn,igc=igc,smcp=smcp,i=i,h=h,whtsp=whtsp, profile_path=profile_path)
@@ -2277,11 +2791,11 @@ def launch_website_s(URL1="",dp=False,dn=True,igc=True,smcp=True,i=False,h=False
         browser_navigate_s(URL1)
         
         browser_wait_s()
-        print("Launched " + browser_title_s())
         
     except Exception as ex:
         print("Error in launch_website_s="+str(ex))
         driver.quit()
+        Chrome_Service_Started = False
     
 def _search_image(img,confidence):  
     """
@@ -2297,11 +2811,21 @@ def _search_image(img,confidence):
         print("Errror in _search_image="+str(ex))
     
 #searches multiple images and returns list of tuple for all images found
-def search_multiple_images_in_parallel(img_lst, confidence=0.9):
+def search_multiple_images_in_parallel(img_lst=[], confidence=0.9):
     """
     Returns the postion of all the images passed as list
     """
     try:
+        if not img_lst:
+            img_lst = []
+            img_lst_folder_path = gui_get_folder_path_from_user('folder containing image(s) to search')
+            img_files_lst = folder_get_all_filenames_as_list(img_lst_folder_path,".png")
+            for img_file in img_files_lst:
+                img_file = os.path.join(img_lst_folder_path,img_file)
+                img_file = img_file.replace("/","\\")
+                img_file = img_file.replace("\\","\\")
+                img_lst.append(img_file)
+            time.sleep(1)
         if len(img_lst) > 0 :
             results = Parallel(n_jobs=10)(delayed(_search_image)(img,confidence) for img in img_lst)
             return results
@@ -2337,7 +2861,7 @@ def _predict_ai_coordinates():
                 if ((m+(w//4)+1) >= a and (m-(w//4)-1) <= a) and ((n+(h//4)+1) >= b and (n-(h//4)-1) <= b):
                     pass
                 else:
-                    return "Multiple images detected, use AiLocateMultipleImageOnScreen() function","Multiple images detected, use AiLocateMultipleImageOnScreen() function"
+                    return "Multiple images detected, use mouse_ai_locate_multiple_images_on_screen() function","Multiple images detected, use mouse_ai_locate_multiple_images_on_screen() function"
                 c += 1
                 x += a
                 y += b
@@ -2371,8 +2895,22 @@ def _multitreading_locateimage(ai_snip_list,confidence=.8):
     except Exception as ex:
         print("Error in _multitreading_locateimage="+str(ex))
     
-def mouse_ai_locate_snip_on_screen(ai_snip_list, confidence=.8):
+def mouse_ai_locate_snip_on_screen(ai_snip_list=[], confidence=.8):
     try:
+        if not ai_snip_list:
+            ai_snip_list = []
+            img_lst_folder_path = gui_get_folder_path_from_user('folder containing similar image(s) with minor variations')
+
+            # img_lst_folder_path = gui_get_any_file_from_user('snip to locate on screen')
+
+            img_files_lst = folder_get_all_filenames_as_list(img_lst_folder_path,".png")
+            for img_file in img_files_lst:
+                img_file = os.path.join(img_lst_folder_path,img_file)
+                img_file = img_file.replace("/","\\")
+                img_file = img_file.replace("\\","\\")
+                ai_snip_list.append(img_file)
+            time.sleep(0.5)
+
         ai_screenshot()
         _multitreading_locateimage(ai_snip_list=ai_snip_list,confidence=confidence)
         ai_x,ai_y = _predict_ai_coordinates() 
@@ -2380,9 +2918,19 @@ def mouse_ai_locate_snip_on_screen(ai_snip_list, confidence=.8):
     except Exception as ex:
         print("Error in mouse_ai_locate_snip_on_screen="+str(ex))
     
-def mouse_ai_locate_multiple_images_on_screen(ai_snip_list,confidence=.8,click=False):
+def mouse_ai_locate_multiple_images_on_screen(ai_snip_list=[],confidence=.8,click=False):
     try:
         ai_multiple_x_y = []
+        if not ai_snip_list:
+            ai_snip_list = []
+            img_lst_folder_path = gui_get_folder_path_from_user('folder containing different image(s) to locate on screen')
+            img_files_lst = folder_get_all_filenames_as_list(img_lst_folder_path,".png")
+            for img_file in img_files_lst:
+                img_file = os.path.join(img_lst_folder_path,img_file)
+                img_file = img_file.replace("/","\\")
+                img_file = img_file.replace("\\","\\")
+                ai_snip_list.append(img_file)
+            time.sleep(1)
         ai_screenshot()
         _multitreading_locateimage(ai_snip_list=ai_snip_list,confidence=confidence)
         for task in as_completed(ai_processes):
@@ -2390,7 +2938,7 @@ def mouse_ai_locate_multiple_images_on_screen(ai_snip_list,confidence=.8,click=F
                 ai_multiple_x_y.append(pg.center(task.result()))
         if ai_multiple_x_y == []:
             ai_multiple_x_y = None
-        print(ai_multiple_x_y)
+        # print(ai_multiple_x_y)
         if ai_multiple_x_y and click==True:
             for click in ai_multiple_x_y:
                 time.sleep(0.5)
@@ -2403,12 +2951,14 @@ def schedule_create_task(Weekly_Daily="D",*,week_day="Sun",start_time_hh_mm_24_h
     """
     Schedules (weekly & daily options as of now) the current BOT (.bat) using Windows Task Scheduler. Please call create_batch_file() function before using this function to convert .pyw file to .bat
     """
+    global batch_file_path
     try:
-        global bot_name
 
-        bot_name = string_remove_special_characters(bot_name)
 
         str_cmd = ""
+
+        if not batch_file_path:
+            batch_file_path = gui_get_any_file_from_user('BATCH file to Schedule. Please call create_batch_file() to create one')
 
         if Weekly_Daily == "D":
             str_cmd = r"powershell.exe Start-Process schtasks '/create  /SC DAILY /tn ClointFusion\{} /tr {} /st {}' ".format(bot_name,batch_file_path,start_time_hh_mm_24_hr_frmt)
@@ -2441,9 +2991,10 @@ def _get_tabular_data_from_website(Website_URL):
     all_tables = ""
     try:
         all_tables = pd.read_html(Website_URL)
+        return all_tables
     except Exception as ex:
         print("Error in _get_tabular_data_from_website="+str(ex))
-    
+
 def browser_get_html_tabular_data_from_website(Website_URL="",table_index=-1,drop_first_row=False,drop_first_few_rows=[0],drop_last_row=False):
     """
     Web Scrape HTML Tables : Gets Website Table Data Easily as an Excel using Pandas. Just pass the URL of Website having HTML Tables.
@@ -2452,8 +3003,8 @@ def browser_get_html_tabular_data_from_website(Website_URL="",table_index=-1,dro
     Ex: browser_get_html_tabular_data_from_website(Website_URL=URL)
     """
     try:
-        if not Website_URL:
-            Website_URL= gui_get_any_input_from_user("Website URL ex: https://www.google.com")
+        if not Website_URL:            
+            Website_URL= gui_get_any_input_from_user("website URL to get HTML Tabular Data ex: https://www.google.com ")
 
         all_tables = _get_tabular_data_from_website(Website_URL)
 
@@ -2500,7 +3051,42 @@ def browser_get_html_tabular_data_from_website(Website_URL="",table_index=-1,dro
     except Exception as ex:
         print("Error in browser_get_html_tabular_data_from_website="+str(ex))
 
-def excel_charts(excel_path="",sheet_name='Sheet1', header=0, x_col="", y_col="", color="", chart_type='bar', title='ClointFusion', show_chart=False):
+def message_send_whatsapp(name="",message=""):
+    """
+    SendWhatsAppMessage function to send message from WhatsApp web application
+    """
+    try:
+        if not name:
+            name = gui_get_any_input_from_user('Exact contact Name to send your message')
+
+        if not message:
+            message= gui_get_any_input_from_user('your Message')
+
+        path = os.environ['USERPROFILE']
+        cprofile_path = os.path.join(path,"AppData","Local","Google","Chrome","User Data","Default2")
+
+        contact_xpath = "//div//span[@title='{}']".format(name)
+        message_xpath = "//div[@dir='ltr'][@contenteditable='true'][@spellcheck='true']"
+
+        launch_website_s(URL1="https://web.whatsapp.com/",whtsp=True,profile_path=cprofile_path)
+        browser_navigate_s("https://web.whatsapp.com/")
+        WebDriverWait(driver, 30).until(EC.visibility_of_element_located((By.XPATH, contact_xpath)))
+        contact_element = browser_locate_element_s(contact_xpath)
+        browser_mouse_click_s(contact_element)
+        browser_wait_s()
+        message_element = browser_locate_element_s(message_xpath)
+        browser_wait_s()
+        time.sleep(5)
+        browser_write_s(message_element,message)
+        browser_mouse_click_s(message_element,i="e")
+        time.sleep(1)
+        browser_wait_s()
+        driver.close()
+
+    except Exception as ex:
+            print("Error in message_send_whatsapp()="+str(ex))
+
+def excel_draw_charts(excel_path="",sheet_name='Sheet1', header=0, x_col="", y_col="", color="", chart_type='bar', title='ClointFusion', show_chart=False):
 
     """
     Interactive data visualization function, which accepts excel file, X & Y column. 
@@ -2512,13 +3098,17 @@ def excel_charts(excel_path="",sheet_name='Sheet1', header=0, x_col="", y_col=""
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('for data visualization')
             
         if not x_col:
-            x_col = gui_get_any_input_from_user("X Axis Column")
+            # x_col = gui_get_any_input_from_user("X Axis Column")
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+            x_col = gui_get_dropdownlist_values_from_user('X Axis Column',col_lst)  
 
         if not y_col:
-            y_col = gui_get_any_input_from_user("Y Axis Column")
+            # y_col = gui_get_any_input_from_user("Y Axis Column")
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+            y_col = gui_get_dropdownlist_values_from_user('Y Axis Column',col_lst)  
 
         if x_col and y_col:
             if color:
@@ -2594,18 +3184,18 @@ def excel_charts(excel_path="",sheet_name='Sheet1', header=0, x_col="", y_col=""
             print("Please supply all the required values")
 
     except Exception as ex:
-        print("Error in excel_charts=" + str(ex))
-    
-def get_long_lat(strZipCode=""):
-    """
-    Function takes zip_code as input and returns longitude, latitude, state, city, county. 
-    """
+        print("Error in excel_draw_charts=" + str(ex))
 
+def get_long_lat(strZipCode=0):
+    """
+    Function takes zip_code as input (int) and returns longitude, latitude, state, city, county. 
+    """
     try:
         if not strZipCode:
-            strZipCode = gui_get_any_input_from_user("USA Zip Code ex: 77429")
+            strZipCode = str(gui_get_any_input_from_user("USA Zip Code ex: 77429"))
 
-        all_data_dict=zipcodes.matching(strZipCode)
+        all_data_dict=zipcodes.matching(str(strZipCode))
+
         all_data_dict = all_data_dict[0]
 
         long = all_data_dict['long']
@@ -2627,7 +3217,7 @@ def excel_geotag_using_zipcodes(excel_path="",sheet_name='Sheet1',header=0,zoom_
 
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('for geo tagging')
 
         m = folium.Map(location=[40.178877,-100.914253 ], zoom_start=zoom_start)
 
@@ -2675,11 +3265,13 @@ def _accept_cookies_h():
     except Exception as ex:
         print("Error in _accept_cookies_h="+str(ex))
     
-def launch_website_h(URL,dp=False,dn=True,igc=True,smcp=True,i=False,headless=False):
+def launch_website_h(URL="",dp=False,dn=True,igc=True,smcp=True,i=False,headless=False):
     try:
         """
         Internal function to launch browser.
         """
+        if not URL:
+            URL = gui_get_any_input_from_user("website URL to Launch Website using Helium functions. Ex https://www.google.com")
         global HLaunched
         HLaunched=True
         options = ChromeOptions()
@@ -2700,7 +3292,7 @@ def launch_website_h(URL,dp=False,dn=True,igc=True,smcp=True,i=False,headless=Fa
         options.add_argument("--no-first-run")                             
         #options.add_argument("--window-size=1920,1080")
         start_chrome(url=URL,options=options,headless=headless)
-        Config.implicit_wait_secs = 30
+        Config.implicit_wait_secs = 120
         _accept_cookies_h()
     except Exception as ex:
         print("Error in launch_website_h = "+str(ex))
@@ -2712,7 +3304,7 @@ def browser_navigate_h(url="",dp=False,dn=True,igc=True,smcp=True,i=False,headle
         Navigates to Specified URL.
         """
         if not url:
-            url = gui_get_any_file_from_user("Website URL ex: https://www.google.com")
+            url = gui_get_any_file_from_user("website URL to Navigate using Helium functions. Ex: https://www.google.com")
 
         global HLaunched
         if not HLaunched:
@@ -2728,6 +3320,12 @@ def browser_write_h(Value="",User_Visible_Text_Element="",alert=False):
     Write a string on the given element.
     """
     try:
+        if not User_Visible_Text_Element:
+            User_Visible_Text_Element = gui_get_any_input_from_user('visible element (placeholder) to WRITE your value. Ex: Username')
+
+        if not Value:
+            Value= gui_get_any_input_from_user('Value to be Written')
+
         if not alert:
             if Value and User_Visible_Text_Element:
                 write(Value, into=User_Visible_Text_Element)
@@ -2737,14 +3335,17 @@ def browser_write_h(Value="",User_Visible_Text_Element="",alert=False):
     except Exception as ex:
         print("Error in browser_write_h = "+str(ex))
     
-def browser_key_press_h(key):
-    """
-    keyboard simulation.
-    """
-    try:
-        press(key)
-    except Exception as ex:
-        print("Error in browser_key_press_h="+str(ex))
+# def browser_key_press_h(key=""):
+#     """
+#     keyboard simulation.
+#     """
+#     try:
+#         if not key:
+#             key = gui_get_any_input_from_user('key to be pressed')
+
+#         press(key)
+#     except Exception as ex:
+#         print("Error in browser_key_press_h="+str(ex))
     
 def browser_mouse_click_h(User_Visible_Text_Element="",element="d"):
     """
@@ -2752,7 +3353,7 @@ def browser_mouse_click_h(User_Visible_Text_Element="",element="d"):
     """
     try:
         if not User_Visible_Text_Element:
-            User_Visible_Text_Element = gui_get_any_input_from_user("Visible Text Element")
+            User_Visible_Text_Element = gui_get_any_input_from_user("visible text element (button/link/checkbox/radio etc) to Click")
 
         if User_Visible_Text_Element and element.lower()=="d":      #default
             click(User_Visible_Text_Element)
@@ -2771,7 +3372,6 @@ def browser_mouse_click_h(User_Visible_Text_Element="",element="d"):
     except Exception as ex:
         print("Error in browser_mouse_click_h = "+str(ex))
     
-        logging.info("browser_mouse_click_h")
 
 def browser_mouse_double_click_h(User_Visible_Text_Element=""):
     """
@@ -2779,31 +3379,34 @@ def browser_mouse_double_click_h(User_Visible_Text_Element=""):
     """
     try:
         if not User_Visible_Text_Element:
-            User_Visible_Text_Element = gui_get_any_input_from_user("Visible Text Element")
+            User_Visible_Text_Element = gui_get_any_input_from_user("visible text element (button/link/checkbox/radio etc) to Double Click")
 
         if User_Visible_Text_Element:
             doubleclick(User_Visible_Text_Element)
     except Exception as ex:
         print("Error in browser_mouse_double_click_h = "+str(ex))
     
-        logging.info("browser_mouse_double_click_h")
-
-def browser_locate_element_h(element,value=True):
+        
+def browser_locate_element_h(element="",value=True):
     """
     Find the element by Xpath, id or css selection.
     """
     try:
+        if not element:
+            element = gui_get_any_input_from_user('browser element to locate (Helium)')
         if value:
             return S(element).value
         return S(element)
     except Exception as ex:
         print("Error in browser_locate_element_h = "+str(ex))
     
-def browser_locate_elements_h(element,value=True):
+def browser_locate_elements_h(element="",value=True):
     """
     Find the elements by Xpath, id or css selection.
     """
     try:
+        if not element:
+            element = gui_get_any_input_from_user('browser ElementS to locate (Helium)')
         if value:
             return find_all(S(element).value)
         return find_all(S(element))
@@ -2816,7 +3419,7 @@ def browser_wait_until_h(text="",element="t"):
     """
     try:
         if not text:
-            text = gui_get_any_input_from_user("Text Element To Search & Wait For")
+            text = gui_get_any_input_from_user("visible text element to Search & Wait for")
 
         if element.lower()=="t":
             wait_until(Text(text).exists,10)        #text
@@ -2824,12 +3427,16 @@ def browser_wait_until_h(text="",element="t"):
             wait_until(Button(text).exists,10)      #button
     except Exception as ex:
         print("Error in browser_wait_until_h = "+str(ex))
-    
-def browser_mouse_click_xy_h(XYTuple):
+
+def browser_mouse_click_xy_h(XYTuple=""):
     """
     Click on the given X Y Co-ordinates.
     """
     try:
+        if not XYTuple:
+            XYTuple1 = gui_get_any_input_from_user('browser X,Y co-ordinates for Mouse Left Click. Ex: (300,400)')
+            XYTuple = tuple(map(int, XYTuple1.split(',')))
+        
         click(XYTuple)
     except Exception as ex:
         print("Error in browser_mouse_click_xy_h = "+str(ex))
@@ -2854,13 +3461,14 @@ def browser_quit_h():
     
 
 #Utility Functions
-def dismantle_code(strFunctionName):
+def dismantle_code(strFunctionName=""):
     """
     This functions dis-assembles given function and shows you column-by-column summary to explain the output of disassembled bytecode.
     Ex: dismantle_code(show_emoji)
     """
     try:
-        if strFunctionName:
+        if not strFunctionName:
+            strFunctionName = gui_get_any_input_from_user('function name to dis-assemble')
             print("Code dismantling {}".format(strFunctionName))
             return dis.dis(strFunctionName) 
     except Exception as ex:
@@ -2878,10 +3486,12 @@ def excel_clean_data(excel_path="",sheet_name='Sheet1',header=0,column_to_be_cle
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to clean the data')
             
         if not column_to_be_cleaned:
-            column_to_be_cleaned = gui_get_any_input_from_user("Column Name")
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)  
+            column_to_be_cleaned = gui_get_dropdownlist_values_from_user('column list to Clean',col_lst,multi_select=False)   
+            column_to_be_cleaned = column_to_be_cleaned[0]
 
         if column_to_be_cleaned:
             df = pd.read_excel(excel_path,sheet_name=sheet_name,header=header)
@@ -2907,10 +3517,11 @@ def excel_charts_numerical_pair_plot(excel_path="", sheet_name="", header=0, use
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('for pair plot charts')
 
         if not usecols:
-            usecols = gui_get_any_input_from_user("Columns To Be Used Ex: A:K")
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+            usecols = gui_get_dropdownlist_values_from_user('column list, to used for Pair Plot',col_lst)   
 
         df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header, usecols=usecols)
         
@@ -2922,6 +3533,7 @@ def excel_charts_numerical_pair_plot(excel_path="", sheet_name="", header=0, use
         
         mng = plt.get_current_fig_manager()
         mng.full_screen_toggle()
+        plt.tight_layout()
         plt.show()
 
         strFileName = excel_path.replace(".xlsx",".PNG")
@@ -2938,10 +3550,11 @@ def excel_charts_correlation_heatmap(excel_path="", sheet_name="", header=0, use
     """
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user()
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('for correlation heatmap charts')
 
         if not usecols:
-            usecols = gui_get_any_input_from_user("Columns To Be Used Ex: A:K")
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+            usecols = gui_get_dropdownlist_values_from_user('column list to used for Co-relation heatmap',col_lst)  
 
         df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header, usecols=usecols)
 
@@ -2955,6 +3568,7 @@ def excel_charts_correlation_heatmap(excel_path="", sheet_name="", header=0, use
 
         mng = plt.get_current_fig_manager()
         mng.full_screen_toggle()
+        plt.tight_layout()
         plt.show()
     except Exception as ex:
         print("Error in excel_charts_correlation_heatmap="+str(ex))
@@ -2972,7 +3586,7 @@ def help_me(user_query=""):
     """
     try:
         if not user_query:
-            user_query = gui_get_any_input_from_user("Query Ex: formatting date")
+            user_query = gui_get_any_input_from_user("your Query. Ex: formatting date")
 
         print("Output from instant coding answers:")
         os.system("howdoi {}".format(user_query))
@@ -2986,7 +3600,7 @@ def browser_get_header_source_code(URL=""):
     """
     try:
         if not URL:
-            URL = gui_get_any_input_from_user("Website URL Ex: https://www.cloint.com")
+            URL = gui_get_any_input_from_user("website URL to get Header & Source Code. Ex: https://www.cloint.com")
 
         page = urlopen(URL) 
         print("\nPage Headers\n")
@@ -3001,5 +3615,450 @@ def browser_get_header_source_code(URL=""):
             f.write(content)
             
         print("Source code saved at "+ str(file_path))
+        return file_path
     except Exception as ex:
-        print("Error in browser_get_header_source_code="+str(ex))
+        print("Error in browser_get_header_source_code"+str(ex))
+
+def compute_hash(inputData=""):
+    """
+    Returns the hash of the inputData 
+    """
+    try:
+        if not inputData:
+            inputData = gui_get_any_input_from_user('input string to compute Hash')
+
+        return sha256(inputData.encode()).hexdigest()
+    except Exception as ex:
+        print("Error in compute_hash="+str(ex))
+
+def browser_get_html_text(url=""):
+    """
+    Function to get HTML text without tags using Beautiful soup
+    """
+    try:
+        if not url:
+            url = gui_get_any_input_from_user("website URL to get HTML Text (without tags). Ex: https://www.cloint.com")
+
+        html_text = requests.get(url) 
+        soup = BeautifulSoup(html_text.content, 'lxml')
+        text = str(soup.text).strip()
+        text = ' '.join(text.split())
+        return text
+    except Exception as ex:
+        print("Error in browser_get_html_text="+str(ex))
+
+def word_cloud_from_url(url=""):
+    """
+    Function to create word cloud from a given website
+    """
+    try:
+        text = browser_get_html_text(url=url)
+        
+        wc = WordCloud(max_words=2000, width=800, height=600,background_color='white',max_font_size=40, random_state=None, relative_scaling=0)
+        wc.generate(text)
+        file_path = os.path.join(output_folder_path,"URL_WordCloud.png")
+        wc.to_file(file_path)
+        print("URL WordCloud saved at {}".format(file_path))
+
+    except Exception as ex:
+        print("Error in word_cloud_from_url="+str(ex))
+
+def word_cloud_from_excel(excel_path="",sheet_name="",header=0,columnName=""):
+    """
+    Function to create word cloud from a given website
+    """
+    try:
+        if not excel_path:
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('for WordCloud')
+            
+        if not columnName:
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+
+            columnName = gui_get_dropdownlist_values_from_user('list of Column names',col_lst)    
+
+        df = pd.read_excel(excel_path,sheet_name=sheet_name,header=header)
+
+        text = ""
+
+        if columnName:
+            text = ''.join(str(df[columnName]))
+            text = text.replace("\n"," ")
+        
+        wc = WordCloud(max_words=2000, width=800, height=600, max_font_size=40, random_state=None, relative_scaling=0)
+        wc.generate(text)
+        file_path = os.path.join(output_folder_path,"Excel_WordCloud.png")
+        wc.to_file(file_path)
+        print("Excel WordCloud saved at {}".format(file_path))
+
+    except Exception as ex:
+        print("Error in word_cloud_from_excel="+str(ex))
+
+def pdf_text_extract(path_to_pdf=""):
+    """
+    Extract data from PDF(s). Works best on machine-generated PDF, than scanned.
+    """
+    try:
+        if not path_to_pdf:
+            path_to_pdf = gui_get_any_file_from_user("the PDF to extract text","pdf")
+
+        pdf_text = ""
+
+        with pdfplumber.open(path_to_pdf) as pdf:
+            total_pages = int(len(pdf.pages))
+            print("Total PDF page(s)="+str(total_pages))
+            for i in range(total_pages):
+                page = pdf.pages[i]
+                pdf_text = pdf_text + page.extract_text()
+                
+        return pdf_text
+
+    except Exception as ex:
+        print("Error in pdf_text_extract="+str(ex))
+
+def word_cloud_from_pdf(path_to_pdf=""):
+    """
+    Function to create word cloud from a given PDF
+    """
+    try:
+
+        text = pdf_text_extract(path_to_pdf=path_to_pdf)
+        
+        wc = WordCloud(max_words=2000, width=800, height=600, max_font_size=40, random_state=None, background_color='black',relative_scaling=0)
+        wc.generate(text)
+        file_path = os.path.join(output_folder_path,"PDF_WordCloud.png")
+        wc.to_file(file_path)
+        print("PDF WordCloud saved at {}".format(file_path))
+
+    except Exception as ex:
+        print("Error in word_cloud_from_pdf="+str(ex))
+
+def excel_describe_data(excel_path="",sheet_name='Sheet1',header=0):
+    """
+    Describe statistical data for the given excel
+    """
+    try:
+        if not excel_path:
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user("to Statistically Describe excel data")
+            
+        df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header)
+
+        user_option_lst = ['Numerical','String','Both']
+
+        user_choice = gui_get_dropdownlist_values_from_user("list of datatypes",user_option_lst)
+
+        if user_choice == 'Numerical':
+            return df.describe(include = [np.number])
+        elif user_choice == 'String':
+            return df.describe(include = ['O'])
+        else:
+            return df.describe(include='all')
+
+    except Exception as ex:
+        print("Error in excel_describe_data="+str(ex))
+
+def camera_capture_image(user_name=""):
+    try:
+
+        user_consent = gui_get_consent_from_user("turn ON camera & take photo ?")
+
+        if user_consent == 'Yes':
+            SECONDS = 5
+            TIMER = int(SECONDS) 
+            window_name = "ClointFusion"
+            cap = cv2.VideoCapture(0) 
+
+            if not cap.isOpened():
+                print("Error in opening camera")
+
+            cv2.namedWindow(window_name, cv2.WND_PROP_FULLSCREEN)
+            cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            font = cv2.FONT_HERSHEY_SIMPLEX 
+
+            if not user_name:
+                user_name = gui_get_any_input_from_user("your name")
+
+            while True: 
+
+                ret, img = cap.read() 
+                cv2.imshow(window_name, img) 
+                prev = time.time() 
+
+                text = "Taking selfie in 5 second(s)".format(str(TIMER))
+                textsize = cv2.getTextSize(text, font, 1, 2)[0]
+                print(str(textsize))
+
+                textX = int((img.shape[1] - textsize[0]) / 2)
+                textY = int((img.shape[0] + textsize[1]) / 2)
+
+                while TIMER >= 0: 
+                    ret, img = cap.read() 
+
+                    cv2.putText(img, "Saving image in {} second(s)".format(str(TIMER)),  
+                                (textX, textY ), font, 
+                                1, (255, 0, 255), 
+                                2) 
+                    cv2.imshow(window_name, img) 
+                    cv2.waitKey(125) 
+
+                    cur = time.time() 
+
+                    if cur-prev >= 1: 
+                        prev = cur 
+                        TIMER = TIMER-1
+
+                ret, img = cap.read() 
+                cv2.imshow(window_name, img) 
+                cv2.waitKey(1000) 
+                file_path = os.path.join(output_folder_path,user_name + ".PNG")
+                cv2.imwrite(file_path, img) 
+                print("Image saved at {}".format(file_path))
+                cap.release() 
+                cv2.destroyAllWindows()
+                break
+
+        else:
+            print("Operation cancelled by user")
+
+    except Exception as ex:
+        print("Error in camera_capture_image="+str(ex))   
+
+def excel_set_formula(excel_path="",sheet_name='Sheet1',target_cell="",formula="",cell_format='General'):
+    """
+    Function to set formula to a particular excel cell
+    """
+    try:
+        if not excel_path:
+            excel_path, sheet_name, _ = gui_get_excel_sheet_header_from_user('to set Formula')
+
+        if not target_cell:
+            target_cell = gui_get_any_input_from_user("target Cell Ex: B6")
+
+        if not formula:
+            formula = gui_get_any_input_from_user("formula Ex: =SUM(B2:B5)")
+
+            wb = op.load_workbook(excel_path)
+            ws = wb[sheet_name]
+
+            ws[target_cell] = formula
+
+            ws[target_cell].number_format = cell_format
+            
+            wb.save(excel_path)
+    except Exception as ex:
+        print("Error in excel_set_formula="+str(ex))             
+
+def convert_csv_to_excel(csv_path="",sep=""):
+    """
+    Function to convert CSV to Excel 
+
+    Ex: convert_csv_to_excel()
+    """
+    try:
+        if not csv_path:
+            csv_path = gui_get_any_file_from_user("CSV to convert to EXCEL","csv")
+
+        if not sep:
+            sep = gui_get_any_input_from_user("Delimeter Ex: |")
+
+        csv_file_name = extract_filename_from_filepath(csv_path)
+        excel_file_name = csv_file_name + ".xlsx"        
+        df=pd.read_csv(csv_path,sep=sep)
+
+        excel_file_path = os.path.join(output_folder_path,excel_file_name)
+        writer = pd.ExcelWriter(excel_file_path, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='Sheet1', index=False)
+
+        writer.save()
+        writer.close()
+        print("Excel file saved : "+str(excel_file_path))
+
+    except Exception as ex:
+        print("Error in convert_csv_to_excel="+str(ex))
+
+def email_send_outlook_desktop(TO="",CC="",BCC="",SUBJECT="",BODY="",ATTACHMENT_FILE_PATH=""):
+    """
+    Function to send email via Outlook Desktop App. This uses already logged in Outlook Desktop App.
+
+    Ex: email_send_outlook_desktop()
+    """
+    try:
+        if not TO:
+            TO = gui_get_any_input_from_user("Comma separated `To` email IDs")
+        if not CC:
+            CC = gui_get_any_input_from_user("Comma separated `CC` email IDs",mandatory_field=False)
+        if not BCC:
+            BCC = gui_get_any_input_from_user("Comma separated `BCC` email IDs",mandatory_field=False)
+        if not SUBJECT:
+            SUBJECT = gui_get_any_input_from_user("Email Subject")
+        if not BODY:
+            BODY = gui_get_any_input_from_user("Email Body")
+        if not ATTACHMENT_FILE_PATH:
+            ATTACHMENT_FILE_PATH = gui_get_any_file_from_user("Attachment File")
+
+        try:
+            launch_any_exe_bat_application(r"C:\Program Files (x86)\Microsoft Office\root\Office16\OUTLOOK.EXE")
+            time.sleep(5)
+        except:
+            key_hit_enter()
+            launch_any_exe_bat_application(r"C:\Program Files (x86)\Microsoft Office\root\Office16\OUTLOOK.EXE")
+            time.sleep(5)
+
+        key_press('ctrl+shift+M') #compose new email
+        time.sleep(2)
+        
+        key_write_enter(TO ,delay=1, key="t")
+        key_press("tab")
+        
+        if CC:
+            key_write_enter(CC ,delay=1, key="t")
+
+        key_press("tab")
+        
+        if BCC:
+            key_write_enter(BCC ,delay=2, key="t")
+            key_press("tab")
+        
+        key_write_enter(SUBJECT,delay=2, key="t")
+        
+        key_write_enter("Hi There!",delay=1)
+        key_hit_enter()
+
+        key_write_enter(BODY,delay=2)
+
+        key_hit_enter()
+
+        key_write_enter("Best Regards,",delay=2)
+
+        key_press("alt+h")
+        key_press("a+f")
+        key_press("b")
+        time.sleep(2)
+        ATTACHMENT_FILE_PATH = ATTACHMENT_FILE_PATH.replace("/","\\")
+        key_write_enter(ATTACHMENT_FILE_PATH)
+        key_press("ctrl+enter")
+        time.sleep(5)
+        key_press("alt+f4")
+        time.sleep(2)
+        
+    except Exception as ex:
+        print("Error in send_email_outlook" + str(ex))
+
+def watch_this_folder(folder_to_watch=""):
+    """
+    Function to Monitor the given folder for creation / modification / deletion events. You can take required action, as per usecase
+    Ex: watch_this_folder()
+    """
+    try:
+        if not folder_to_watch:
+            folder_to_watch= gui_get_folder_path_from_user('folder to Watch / Monitor')
+
+        event_handler = FileMonitor_Handler()
+        observer = watchdog.observers.Observer()
+        observer.schedule(event_handler,folder_to_watch, recursive = False)
+        observer.start()
+
+        try:
+            print("Monitoring Folder: {} every 1 Second, for create / modify / delete events".format(folder_to_watch))
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("Stopping Folder Monitor...")
+            observer.stop()
+
+        observer.join()
+        
+    except Exception as ex:
+        print("Error in watch_this_folder")
+
+# Class related to capture_snip_now
+class CaptureSnip(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        root = tk.Tk()
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        self.setGeometry(0, 0, screen_width, screen_height)
+        self.setWindowTitle(' ')
+        self.begin = QtCore.QPoint()
+        self.end = QtCore.QPoint()
+        self.setWindowOpacity(0.3)
+        QtWidgets.QApplication.setOverrideCursor(
+            QtGui.QCursor(QtCore.Qt.CrossCursor)
+        )
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        print('Capture now...')
+        self.show()
+
+    def paintEvent(self, event):
+        qp = QtGui.QPainter(self)
+        qp.setPen(QtGui.QPen(QtGui.QColor('black'), 3))
+        qp.setBrush(QtGui.QColor(128, 128, 255, 128))
+        qp.drawRect(QtCore.QRect(self.begin, self.end))
+
+    def mousePressEvent(self, event):
+        self.begin = event.pos()
+        self.end = self.begin
+        self.update()
+
+    def mouseMoveEvent(self, event):
+        self.end = event.pos()
+        self.update()
+
+    def mouseReleaseEvent(self, event):
+        self.close()
+
+        x1 = min(self.begin.x(), self.end.x())
+        y1 = min(self.begin.y(), self.end.y())
+        x2 = max(self.begin.x(), self.end.x())
+        y2 = max(self.begin.y(), self.end.y())
+
+        img = ImageGrab.grab(bbox=(x1, y1, x2, y2))
+        file_num = str(len(os.listdir(img_folder_path)))
+        file_name = os.path.join(img_folder_path,file_num + "_snip.PNG" )
+        img.save(file_name)
+        return file_name
+        
+def capture_snip_now():
+    """
+    Captures the snip and stores in Image Folder of the BOT by giving continous numbering
+
+    Ex: capture_snip_now()
+    """
+    try:
+        if message_counter_down_timer(3):
+            app = QtWidgets.QApplication(sys.argv)
+            window = CaptureSnip()
+            window.activateWindow()
+            app.aboutToQuit.connect(app.deleteLater)
+            sys.exit(app.exec_())
+            
+    except Exception as ex:
+        print("Error in capture_snip_now="+str(ex))        
+
+def ON_semi_automatic_mode():
+    """
+    This function sets semi_automatic_mode as True => ON
+    """
+    global enable_semi_automatic_mode
+    semi_automatic_config_file_path = os.path.join(config_folder_path,"Semi_Automatic_Mode.txt")
+    try:    
+        with open(semi_automatic_config_file_path, 'w') as f:
+            f.write('True')
+        enable_semi_automatic_mode = True
+        print("Semi Automatic Mode is ENABLED "+ show_emoji())
+    except Exception as ex:
+        print("Error in ON_semi_automatic_mode="+str(ex))
+
+def OFF_semi_automatic_mode():
+    """
+    This function sets semi_automatic_mode as False => OFF
+    """
+    global enable_semi_automatic_mode
+    semi_automatic_config_file_path = os.path.join(config_folder_path,"Semi_Automatic_Mode.txt")
+    try:    
+        with open(semi_automatic_config_file_path, 'w') as f:
+            f.write('False')
+        enable_semi_automatic_mode = False
+        print("Semi Automatic Mode is DISABLED "+ show_emoji())
+    except Exception as ex:
+        print("Error in OFF_semi_automatic_mode="+str(ex))        
