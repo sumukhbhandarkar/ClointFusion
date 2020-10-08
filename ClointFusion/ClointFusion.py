@@ -7,6 +7,7 @@ import sys
 import platform
 import urllib.request
 
+
 current_environment = 0
 
 
@@ -40,7 +41,7 @@ if os_name == 'windows':
 
     if os.path.exists(r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)) == False :
         with open(r"{}\ClointFusion\Scripts\activate_this.py".format(os_path), 'w') as f:
-            activate_this_py =""" 
+            activate_this_py = """
 try:
     __file__
 except NameError:
@@ -48,7 +49,6 @@ except NameError:
         "You must run this like execfile('path/to/activate_this.py', dict(__file__='path/to/activate_this.py'))")
 import sys
 import os
-
 old_os_path = os.environ.get('PATH', '')
 os.environ['PATH'] = os.path.dirname(os.path.abspath(__file__)) + os.pathsep + old_os_path
 base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -70,10 +70,10 @@ for item in list(sys.path):
 sys.path[:0] = new_sys_path """
             f.write(activate_this_py)
 
-    subprocess.call(r"cmd.exe -ArgumentList /c {}\ClointFusion\Scripts\activate".format(os_path))
+subprocess.call(r"cmd.exe -ArgumentList /c {}\ClointFusion\Scripts\activate".format(os_path))
 
-    activate_venv = r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)
-    exec(open(activate_venv).read(), {'__file__': activate_venv})
+activate_venv = r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)
+exec(open(activate_venv).read(), {'__file__': activate_venv})
 
 list_of_required_packages = ["wheel","urllib3","beautifulsoup4","pdfplumber","watchdog","wordcloud","scipy","numpy","howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
 
@@ -208,22 +208,6 @@ def _welcome_to_clointfusion():
     welcome_msg = "Welcome to ClointFusion, Made in India with " + show_emoji('red_heart')
     print(welcome_msg)
 
-
-def string_remove_special_characters(inputStr=""):
-    """
-    Removes all the special character.
-
-    Parameters:
-        inputStr  (str) : string for removing all the special character in it.
-
-    Returns :
-        outputStr (str) : returns the alphanumeric string.
-    """
-
-    if inputStr:
-        outputStr = ''.join(e for e in inputStr if e.isalnum())
-        return outputStr  
-
 def _set_bot_name(strBotName=""):
     """
     Internal function
@@ -240,7 +224,7 @@ def _set_bot_name(strBotName=""):
         bot_name = current_working_dir[current_working_dir.rindex("\\") + 1 : ] #Assumption that user has given proper folder name and so taking it as BOT name
 
     else:
-        strBotName = string_remove_special_characters(strBotName)    
+        strBotName = ''.join(e for e in strBotName if e.isalnum()) 
         bot_name = strBotName
 
     c_drive_base_dir = c_drive_base_dir + "_" + bot_name
@@ -450,7 +434,7 @@ import clipboard
 import re
 from openpyxl import load_workbook
 from openpyxl.styles import Font
-
+from matplotlib.pyplot import axis
 import plotly.express as px
 from kaleido.scopes.plotly import PlotlyScope
 import plotly.graph_objects as go
@@ -563,11 +547,12 @@ def read_semi_automatic_log(key):
     except:
         return None
 
-def excel_is_value_exists(excel_path,sheet_name='Sheet1',header=0,usecols="",value=""):
+def _excel_if_value_exists(excel_path="",sheet_name='Sheet1',header=0,usecols="",value=""):
     """
     Check if a given value exists in given excel. Returns True / False
     """
     try:
+        
         if usecols:
             df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header, usecols=usecols)
         else:
@@ -581,7 +566,22 @@ def excel_is_value_exists(excel_path,sheet_name='Sheet1',header=0,usecols="",val
             return False
 
     except Exception as ex:
-        print("Error in excel_is_value_exists="+str(ex))
+        print("Error in _excel_if_value_exists="+str(ex))
+
+def message_pop_up(strMsg="",delay=3):
+    """
+    Specified message will popup on the screen for a specified duration of time.
+
+    Parameters:
+        strMsg  (str) : message to popup.
+        delay   (int) : duration of the popup.
+    """
+    try:
+        if not strMsg:
+            strMsg = gui_get_any_input_from_user("pop-up message")
+        sg.popup_no_wait(strMsg,title='ClointFusion',auto_close_duration=delay, auto_close=True, keep_on_top=True,background_color="white",text_color="black")#,icon=cloint_ico_logo_base64)
+    except Exception as ex:
+        print("Error in message_pop_up="+str(ex))
 
 def update_semi_automatic_log(key, value):
     """
@@ -590,7 +590,7 @@ def update_semi_automatic_log(key, value):
     try:
         bot_config_path = os.path.join(config_folder_path,bot_name + ".xlsx")
 
-        if excel_is_value_exists(bot_config_path,usecols=['KEY'],value=key):
+        if _excel_if_value_exists(bot_config_path,usecols=['KEY'],value=key):
             df = pd.read_excel(bot_config_path)
             row_index = df.index[df['KEY'] == key].tolist()[0]
             
@@ -652,7 +652,10 @@ def gui_get_any_file_from_user(msgForUser="the file : ",Extension_Without_Dot="*
 
             update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-FILE-']).strip())
         
-            return str(values['-FILE-']).strip()
+            if str(values['-FILE-']):
+                return str(values['-FILE-']).strip()
+            else:
+                return None
 
         else:
             return str(existing_value)
@@ -660,12 +663,6 @@ def gui_get_any_file_from_user(msgForUser="the file : ",Extension_Without_Dot="*
     except Exception as ex:
         print("Error in gui_get_any_file_from_user="+str(ex))
 
-
-
-
-
-
-    
 def excel_get_all_sheet_names(excelFilePath=""):
     """
     Gives you all names of the sheets in the given excel sheet.
@@ -685,17 +682,6 @@ def excel_get_all_sheet_names(excelFilePath=""):
     except Exception as ex:
         print("Error in excel_get_all_sheet_names="+str(ex))
     
-def excel_get_all_header_columns(excelFilePath,sheet_name="Sheet1",header=0):
-    """
-    Gives you all column header names of the given excel sheet.
-    """
-    col_lst = []
-    try:
-        col_lst = pd.read_excel(excelFilePath,sheet_name=sheet_name,header=header,nrows=1,dtype=str).columns.tolist()
-        return col_lst
-    except Exception as ex:
-        print("Error in excel_get_all_header_columns="+str(ex))
-
 def message_counter_down_timer(start_value=5):
     """
     Function to show count-down timer. Default is 5 seconds.
@@ -838,7 +824,6 @@ def gui_get_dropdownlist_values_from_user(msgForUser="",dropdown_list=[],multi_s
     except Exception as ex:
         print("Error in gui_get_dropdownlist_values_from_user="+str(ex))
 
-
 def gui_get_excel_sheet_header_from_user(msgForUser=""): 
     """
     Generic function to accept excel path, sheet name and header from user using GUI. Returns all these values in disctionary format.
@@ -967,7 +952,6 @@ def gui_get_folder_path_from_user(msgForUser="the folder : "):
     except Exception as ex:
         print("Error in gui_get_folder_path_from_user="+str(ex))
 
-
 def gui_get_any_input_from_user(msgForUser="the value : ",password=False,mandatory_field=True):    
     """
     Generic function to accept any input (text / numeric) from user using GUI. Returns the value in string format.
@@ -1052,8 +1036,21 @@ def gui_get_any_input_from_user(msgForUser="the value : ",password=False,mandato
     except Exception as ex:
         print("Error in gui_get_any_input_from_user="+str(ex))
 
+def excel_get_all_header_columns(excel_path="",sheet_name="Sheet1",header=0):
+    """
+    Gives you all column header names of the given excel sheet.
+    """
+    col_lst = []
+    try:
+        if not excel_path:
+            excel_path,sheet_name,header = gui_get_excel_sheet_header_from_user('to all header columns as a list')
 
-def extract_filename_from_filepath(strFilePath=""):
+        col_lst = pd.read_excel(excel_path,sheet_name=sheet_name,header=header,nrows=1,dtype=str).columns.tolist()
+        return col_lst
+    except Exception as ex:
+        print("Error in excel_get_all_header_columns="+str(ex))
+
+def _extract_filename_from_filepath(strFilePath=""):
     """
     Function which extracts file name from the given filepath
     """
@@ -1067,15 +1064,27 @@ def extract_filename_from_filepath(strFilePath=""):
             strFileName = strFileName.split(".")[0]
             return strFileName
 
-
     else:
         print("Please enter the value="+str(strFilePath))    
-
     
+def string_remove_special_characters(inputStr=""):
+    """
+    Removes all the special character.
 
-    
+    Parameters:
+        inputStr  (str) : string for removing all the special character in it.
 
-    
+    Returns :
+        outputStr (str) : returns the alphanumeric string.
+    """
+
+    if not inputStr:
+        inputStr = gui_get_any_input_from_user('input string to remove Special characters')
+
+    if inputStr:
+        outputStr = ''.join(e for e in inputStr if e.isalnum())
+        return outputStr  
+
 # @background
 def excel_create_excel_file_in_given_folder(fullPathToTheFolder="",excelFileName="",sheet_name="Sheet1"):
     """
@@ -1118,7 +1127,6 @@ def excel_create_excel_file_in_given_folder(fullPathToTheFolder="",excelFileName
     except Exception as ex:
         print("Error in excel_create_excel_file_in_given_folder="+str(ex))
 
-    
 def folder_create_text_file(textFolderPath="",txtFileName=""):
     """
     Creates Text file in the given path.
@@ -1146,6 +1154,31 @@ def folder_create_text_file(textFolderPath="",txtFileName=""):
 
     except Exception as ex:
         print("Error in folder_create_text_file="+str(ex))
+
+def excel_if_value_exists(excel_path="",sheet_name='Sheet1',header=0,usecols="",value=""):
+    """
+    Check if a given value exists in given excel. Returns True / False
+    """
+    try:
+        excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to search the VALUE')
+
+        if not value:
+            value = gui_get_any_input_from_user('VALUE to be searched')
+        
+        if usecols:
+            df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header, usecols=usecols)
+        else:
+            df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header)
+        
+        if value in df.values:
+            df = ''
+            return True
+        else:
+            df = ''
+            return False
+
+    except Exception as ex:
+        print("Error in _excel_if_value_exists="+str(ex))
 
 def _get_image_from_base64(imgFileName,imgBase64Str):
     """
@@ -1195,9 +1228,19 @@ def create_batch_file(application_exe_pyw_file_path=""):
     global batch_file_path
     try:
         if not application_exe_pyw_file_path:
-            application_exe_pyw_file_path = gui_get_any_file_from_user('.pyw file for which .bat is to be made','pyw')
+            
+            application_exe_pyw_file_path = gui_get_any_file_from_user('.pyw/.exe file for which .bat is to be made')
 
-        application_name = application_exe_pyw_file_path[application_exe_pyw_file_path.rindex("\\")+1:]
+            while not (str(application_exe_pyw_file_path).endswith(".exe") or str(application_exe_pyw_file_path).endswith(".pyw")):
+                print("Please choose the file ending with .pyw or .exe")
+                application_exe_pyw_file_path = gui_get_any_file_from_user('.pyw/.exe file for which .bat is to be made')
+            
+        application_name= ""
+
+        if str(application_exe_pyw_file_path).endswith(".exe"):
+            application_name = _extract_filename_from_filepath(application_exe_pyw_file_path) + ".exe"
+        else:
+            application_name = _extract_filename_from_filepath(application_exe_pyw_file_path) + ".pyw"
 
         cmd = ""
 
@@ -1222,7 +1265,6 @@ def create_batch_file(application_exe_pyw_file_path=""):
     except Exception as ex:
         print("Error in create_batch_file="+str(ex))
     
-
 def excel_create_file(fullPathToTheFile="",fileName="",sheet_name="Sheet1"):
     try:
         if not fullPathToTheFile:
@@ -1306,22 +1348,7 @@ def folder_delete_all_files(fullPathOfTheFolder="",file_extension_without_dot="a
     except Exception as ex:
         print("Error in folder_delete_all_files="+str(ex)) 
         return -1
-    
-def message_pop_up(strMsg="",delay=3):
-    """
-    Specified message will popup on the screen for a specified duration of time.
-
-    Parameters:
-        strMsg  (str) : message to popup.
-        delay   (int) : duration of the popup.
-    """
-    try:
-        if not strMsg:
-            strMsg = gui_get_any_input_from_user("pop-up message")
-        sg.popup_no_wait(strMsg,title='ClointFusion',auto_close_duration=delay, auto_close=True, keep_on_top=True,background_color="white",text_color="black")#,icon=cloint_ico_logo_base64)
-    except Exception as ex:
-        print("Error in message_pop_up="+str(ex))
-    
+        
 def key_hit_enter():
     """
     Enter key will be pressed once.
@@ -1415,8 +1442,9 @@ def window_activate_and_maximize(windowName=""):
     """
     try:
         if not windowName:
-            windowName = gui_get_any_input_from_user("window name to Activate & Maximize")
-
+            open_win_list = window_get_all_opened_titles()
+            windowName = gui_get_dropdownlist_values_from_user("window titles to Activate & Maximize",dropdown_list=open_win_list,multi_select=False)[0]
+            
         item,window_found = _window_find_exact_name(windowName)
         if window_found:
             windw = gw.getWindowsWithTitle(item)[0]
@@ -1438,7 +1466,8 @@ def window_minimize(windowName=""):
     """
     try:
         if not windowName:
-            windowName = gui_get_any_input_from_user("window name to Minimize")
+            open_win_list = window_get_all_opened_titles()
+            windowName = gui_get_dropdownlist_values_from_user("window titles to Minimize",dropdown_list=open_win_list,multi_select=False)[0]
             
         item,window_found = _window_find_exact_name(windowName)
         if window_found:
@@ -1449,7 +1478,7 @@ def window_minimize(windowName=""):
             print("No window available to minimize by name="+str(windowName))
     except Exception as ex:
         print("Error in window_minimize="+str(ex))
-    
+
 def window_close(windowName=""):
     """
     Close the desired window.
@@ -1459,8 +1488,9 @@ def window_close(windowName=""):
     """
     try:
         if not windowName:
-            windowName = gui_get_any_input_from_user("window name to Close")
-
+            open_win_list = window_get_all_opened_titles()
+            windowName = gui_get_dropdownlist_values_from_user("window titles to Close",dropdown_list=open_win_list,multi_select=False)[0]
+            
         item,window_found = _window_find_exact_name(windowName)
         if window_found:
             windw = gw.getWindowsWithTitle(item)[0]
@@ -1473,7 +1503,7 @@ def window_close(windowName=""):
 
 def launch_any_exe_bat_application(pathOfExeFile=""):
     """
-    Launches any exe or batch file.
+    Launches any exe or batch file or excel file etc.
 
     Parameters:
         pathOfExeFile  (str) : location of the file with extension.
@@ -1482,12 +1512,25 @@ def launch_any_exe_bat_application(pathOfExeFile=""):
         if not pathOfExeFile:
             pathOfExeFile = gui_get_any_file_from_user('EXE or BAT file')
 
-        subprocess.Popen(pathOfExeFile)
+        try:
+            subprocess.Popen(pathOfExeFile)
+        except:
+            os.startfile(pathOfExeFile)
+
         time.sleep(1) 
-        window_activate_and_maximize(pathOfExeFile)
+        try:
+            window_activate_and_maximize(pathOfExeFile)
+        except:
+            import win32gui, win32con
+            time.sleep(3) 
+            hwnd = win32gui.GetForegroundWindow()
+            win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+
         time.sleep(1) 
     except Exception as ex:
         print("ERROR in launch_any_exe_bat_application="+str(ex))
+
+
     
 class myThread1 (threading.Thread):
     def __init__(self,err_str):
@@ -1739,7 +1782,7 @@ def excel_get_row_column_count(excel_path="", sheet_name="Sheet1", header=0):
     except Exception as ex:
         print("Error in excel_get_row_column_count="+str(ex))
     
-def excel_copy_range_from_sheet(excel_path="",*, sheet_name='Sheet1', startCol=1, startRow=1, endCol=1, endRow=1):
+def excel_copy_range_from_sheet(excel_path="",*, sheet_name='Sheet1', startCol=0, startRow=0, endCol=0, endRow=0):
     """
     Copies the specific range from the provided excel sheet and returns copied data as a list
     Parameters:
@@ -1757,6 +1800,16 @@ def excel_copy_range_from_sheet(excel_path="",*, sheet_name='Sheet1', startCol=1
         if not excel_path:
             excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to copy range from')
             
+        if startCol == 0 and startRow ==0 and endCol == 0 and endRow == 0:
+            sRow_sCol_eRow_Col = gui_get_any_input_from_user('startRow , startCol, endRow, endCol (comma separated, index from 1)')    
+
+            if sRow_sCol_eRow_Col:
+                startRow , startCol, endRow, endCol = str(sRow_sCol_eRow_Col).split(",")
+                startRow = int(startRow)
+                startCol = int(startCol)
+                endRow = int(endRow)
+                endCol = int(endCol)
+
         from_wb = load_workbook(filename = excel_path)
         try:
             fromSheet = from_wb[sheet_name]
@@ -1780,17 +1833,31 @@ def excel_copy_range_from_sheet(excel_path="",*, sheet_name='Sheet1', startCol=1
     except Exception as ex:
         print("Error in copy_range_from_excel_sheet="+str(ex))
     
-def excel_paste_range_to_sheet(excel_path="",*, sheet_name='Sheet1', startCol=1, startRow=1, endCol=1, endRow=1, copiedData):
+def excel_copy_paste_range_from_to_sheet(excel_path="",*, sheet_name='Sheet1', startCol=0, startRow=0, endCol=0, endRow=0, copiedData=""):
     """
     Pastes the copied data in specific range of the given excel sheet.
     """
     try:
         try:
+            if not copiedData:
+                copiedData = excel_copy_range_from_sheet()
+
             if not excel_path:
                 excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to paste range into')
                 
+            if startCol == 0 and startRow ==0 and endCol == 0 and endRow == 0:
+                sRow_sCol_eRow_Col = gui_get_any_input_from_user('startRow , startCol, endRow, endCol (comma separated, index from 1)')    
+
+                if sRow_sCol_eRow_Col:
+                    startRow , startCol, endRow, endCol = str(sRow_sCol_eRow_Col).split(",")
+                    startRow = int(startRow)
+                    startCol = int(startCol)
+                    endRow = int(endRow)
+                    endCol = int(endCol)
+
             to_wb = load_workbook(filename = excel_path)
             toSheet = to_wb[sheet_name]
+
         except:
             excel_create_excel_file_in_given_folder((str(excel_path[:(str(excel_path).rindex("\\"))])),(str(excel_path[str(excel_path).rindex("\\")+1:excel_path.find(".")])),sheet_name)
             to_wb = load_workbook(filename = excel_path)
@@ -1810,7 +1877,7 @@ def excel_paste_range_to_sheet(excel_path="",*, sheet_name='Sheet1', startCol=1,
         to_wb.save(excel_path)
         return countRow-1
     except Exception as ex:
-        print("Error in excel_paste_range_to_sheet="+str(ex))
+        print("Error in excel_copy_paste_range_from_to_sheet="+str(ex))
     
 def _excel_copy_range(startCol=1, startRow=1, endCol=1, endRow=1, sheet='Sheet1'):
     """
@@ -1957,14 +2024,16 @@ def excel_drop_columns(excel_path="", sheet_name='Sheet1', header=0, columnsToBe
             col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
             columnsToBeDropped = gui_get_dropdownlist_values_from_user('columns list to drop',col_lst) 
 
-        df=pd.read_excel(excel_path,sheet_name=sheet_name, header=header)
+        df=pd.read_excel(excel_path,sheet_name=sheet_name, header=header) 
 
         if isinstance(columnsToBeDropped, list):
             df.drop(columnsToBeDropped, axis = 1, inplace = True) 
         else:
             df.drop([columnsToBeDropped], axis = 1, inplace = True) 
 
-        df.to_excel(excel_path,index=False)
+        with pd.ExcelWriter(excel_path, engine='openpyxl',mode='a') as writer:
+            df.to_excel(writer, sheet_name=sheet_name,index=False) 
+            
     except Exception as ex:
         print("Error in excel_drop_columns="+str(ex))
 
@@ -2014,14 +2083,15 @@ def excel_clear_sheet(excel_path="",sheet_name="Sheet1", header=0):
     Clears the contents of given excel files keeping header row intact
     """
     try:
+        
         if not excel_path:
             excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('to clear the sheet')
 
         df = pd.read_excel(excel_path,sheet_name=sheet_name,header=header) 
         df = df.head(0)
 
-        with pd.ExcelWriter(excel_path, engine='openpyxl', mode='w') as writer:
-            df.to_excel(writer, index=False, sheet_name=sheet_name)
+        with pd.ExcelWriter(excel_path, engine='openpyxl', mode='a') as writer:
+            df.to_excel(writer,sheet_name=sheet_name, index=False)
 
         # writer = pd.ExcelWriter(excel_path, engine='openpyxl')
         # writer.book = load_workbook(excel_path)
@@ -2094,20 +2164,23 @@ def excel_remove_duplicates(excel_path="", *, sheet_name="Sheet1", header=0, col
         if not columnName:
             col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
             columnName = gui_get_dropdownlist_values_from_user('list of columns to remove duplicates',col_lst)  
-
+    
         df = pd.read_excel(excel_path, sheet_name=sheet_name,header=header) 
+
         count = 0 
         if saveResultsInSameExcel:
             df.drop_duplicates(subset=columnName, keep=which_one_to_keep, inplace=True)
-            df.to_excel(excel_path, index=False)
+            with pd.ExcelWriter(excel_path, engine='openpyxl', mode='a') as writer:
+                df.to_excel(writer,sheet_name=sheet_name,index=False)
+
             count = df.shape[0]
         else:
             df1 = df.drop_duplicates(subset=columnName, keep=which_one_to_keep, inplace=False)
             excel_path = str(excel_path).replace(".","_DupDropped.")
-            df1.to_excel(excel_path, index=False)
+            with pd.ExcelWriter(excel_path, engine='openpyxl', mode='a') as writer:
+                df1.to_excel(writer,sheet_name=sheet_name,index=False)
             count = df1.shape[0]
 
-        print(str(count) + " rows affected")
         return count
     except Exception as ex:
         print("Error in excel_remove_duplicates="+str(ex))
@@ -2145,11 +2218,11 @@ def excel_vlook_up(filepath_1="", *, sheet_name_1 = 'Sheet1', header_1 = 0, file
         else:
             output_file_path = filepath_1
 
-        # with pd.ExcelWriter(output_file_path, engine='openpyxl', mode='a') as writer:
-        #     df.to_excel(writer, index=False)
+        with pd.ExcelWriter(output_file_path, engine='openpyxl', mode='a') as writer:
+            df.to_excel(writer, index=False)
 
-        df.to_excel(output_file_path, index = False)
-        print("excel_vlook_up Done")
+        # df.to_excel(output_file_path, index = False)
+        
         return True
     
     except Exception as ex:
@@ -2298,8 +2371,8 @@ def mouse_click(x="", y="", left_or_right="left", single_double_triple="single",
                 x = int(x)
                 y = int(y)
             else:
-                x = x_y.split(" ")[0]
-                y = x_y.split(" ")[1]
+                x = int(x_y.split(" ")[0])
+                y = int(x_y.split(" ")[1])
 
         copiedText = ""
         time.sleep(1)
@@ -3101,14 +3174,12 @@ def excel_draw_charts(excel_path="",sheet_name='Sheet1', header=0, x_col="", y_c
             excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('for data visualization')
             
         if not x_col:
-            # x_col = gui_get_any_input_from_user("X Axis Column")
             col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
-            x_col = gui_get_dropdownlist_values_from_user('X Axis Column',col_lst)  
+            x_col = gui_get_dropdownlist_values_from_user('X Axis Column',col_lst,multi_select=False)[0]  
 
         if not y_col:
-            # y_col = gui_get_any_input_from_user("Y Axis Column")
             col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
-            y_col = gui_get_dropdownlist_values_from_user('Y Axis Column',col_lst)  
+            y_col = gui_get_dropdownlist_values_from_user('Y Axis Column',col_lst,multi_select=False)[0]  
 
         if x_col and y_col:
             if color:
@@ -3173,12 +3244,13 @@ def excel_draw_charts(excel_path="",sheet_name='Sheet1', header=0, x_col="", y_c
             if show_chart:
                 fig.show()
             
-            # strFileName = (excel_path[excel_path.rindex("\\")+1:]).split(".")[0] + ".PNG"
-            strFileName = excel_path.replace(".xlsx",".PNG")
+            strFileName = _extract_filename_from_filepath(excel_path)
+            strFileName = os.path.join(output_folder_path,strFileName + ".PNG")
             
             scope = PlotlyScope()
             with open(strFileName, "wb") as f:
                 f.write(scope.transform(fig, format="png"))
+
             print("Chart saved at " + strFileName)
         else:
             print("Please supply all the required values")
@@ -3207,17 +3279,21 @@ def get_long_lat(strZipCode=0):
     except Exception as ex:
         print("Error in get_long_lat="+str(ex))
 
-def excel_geotag_using_zipcodes(excel_path="",sheet_name='Sheet1',header=0,zoom_start=5,zip_code_column="ZIP CODE",data_columns_as_list=[],color_boolean_column=""):
+def excel_geotag_using_zipcodes(excel_path="",sheet_name='Sheet1',header=0,zoom_start=5,zip_code_column="",data_columns_as_list=[],color_boolean_column=""):
     """
     Function takes Excel file having ZipCode column as input. Takes one data column at present. 
     Creates .html file having geo-tagged markers/baloons on the page.
 
-    Ex: excel_geotag_using_zipcodes(excel_path)
+    Ex: excel_geotag_using_zipcodes()
     """
 
     try:
         if not excel_path:
-            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('for geo tagging')
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('for geo tagging (Note: As of now, works only for USA Zip codes)')
+
+        if not zip_code_column:
+            col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
+            zip_code_column = gui_get_dropdownlist_values_from_user('having Zip Codes',col_lst,multi_select=False)[0]
 
         m = folium.Map(location=[40.178877,-100.914253 ], zoom_start=zoom_start)
 
@@ -3248,7 +3324,9 @@ def excel_geotag_using_zipcodes(excel_path="",sheet_name='Sheet1',header=0,zoom_
                 else:
                     folium.Marker(location=[lat, long], popup='State: ' + state + ',\nCity:' + city + ',\nCounty:' + county, icon=folium.Icon(color='blue', icon='info-sign')).add_to(m)
 
-        graphFileName = excel_path.replace(".xlsx",".html")
+        graphFileName = _extract_filename_from_filepath(excel_path)
+        graphFileName = os.path.join(output_folder_path,graphFileName + ".html")
+
         print("GeoTagged Graph saved at "+ graphFileName)
         m.save(graphFileName)
     
@@ -3464,11 +3542,12 @@ def browser_quit_h():
 def dismantle_code(strFunctionName=""):
     """
     This functions dis-assembles given function and shows you column-by-column summary to explain the output of disassembled bytecode.
+
     Ex: dismantle_code(show_emoji)
     """
     try:
         if not strFunctionName:
-            strFunctionName = gui_get_any_input_from_user('function name to dis-assemble')
+            strFunctionName = gui_get_any_input_from_user('Exact function name to dis-assemble. Ex: show_emoji')
             print("Code dismantling {}".format(strFunctionName))
             return dis.dis(strFunctionName) 
     except Exception as ex:
@@ -3490,7 +3569,7 @@ def excel_clean_data(excel_path="",sheet_name='Sheet1',header=0,column_to_be_cle
             
         if not column_to_be_cleaned:
             col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)  
-            column_to_be_cleaned = gui_get_dropdownlist_values_from_user('column list to Clean',col_lst,multi_select=False)   
+            column_to_be_cleaned = gui_get_dropdownlist_values_from_user('column list to Clean (removes digits/puntuation/space etc)',col_lst,multi_select=False)   
             column_to_be_cleaned = column_to_be_cleaned[0]
 
         if column_to_be_cleaned:
@@ -3521,11 +3600,10 @@ def excel_charts_numerical_pair_plot(excel_path="", sheet_name="", header=0, use
 
         if not usecols:
             col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
-            usecols = gui_get_dropdownlist_values_from_user('column list, to used for Pair Plot',col_lst)   
+            usecols = gui_get_dropdownlist_values_from_user('column list (minimum 2), to use for Pair Plot',col_lst)   
 
         df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header, usecols=usecols)
         
-        # df = sb.load_dataset('iris')
         g = sb.PairGrid(df)
         g.map(plt.scatter)
         g.map_diag(plt.hist)
@@ -3534,10 +3612,12 @@ def excel_charts_numerical_pair_plot(excel_path="", sheet_name="", header=0, use
         mng = plt.get_current_fig_manager()
         mng.full_screen_toggle()
         plt.tight_layout()
-        plt.show()
+        
+        strFileName = _extract_filename_from_filepath(excel_path)
+        strFileName = os.path.join(output_folder_path,strFileName + ".PNG")
 
-        strFileName = excel_path.replace(".xlsx",".PNG")
         plt.savefig(strFileName)
+        plt.show()
     
         print("Chart saved at " + strFileName)
 
@@ -3554,14 +3634,14 @@ def excel_charts_correlation_heatmap(excel_path="", sheet_name="", header=0, use
 
         if not usecols:
             col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
-            usecols = gui_get_dropdownlist_values_from_user('column list to used for Co-relation heatmap',col_lst)  
+            usecols = gui_get_dropdownlist_values_from_user('column list (minimum 2) to use for Co-relation heatmap',col_lst)  
 
         df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header, usecols=usecols)
 
-        # print(df.corr())
         sb.heatmap(df.corr(), annot = True, cmap = 'viridis')
         
-        strFileName = excel_path.replace(".xlsx",".PNG")
+        strFileName = _extract_filename_from_filepath(excel_path)
+        strFileName = os.path.join(output_folder_path,strFileName + ".PNG")
         
         plt.savefig(strFileName)
         print("Chart saved at " + strFileName)
@@ -3569,7 +3649,10 @@ def excel_charts_correlation_heatmap(excel_path="", sheet_name="", header=0, use
         mng = plt.get_current_fig_manager()
         mng.full_screen_toggle()
         plt.tight_layout()
+        
+        plt.savefig(strFileName)
         plt.show()
+
     except Exception as ex:
         print("Error in excel_charts_correlation_heatmap="+str(ex))
     
@@ -3663,7 +3746,7 @@ def word_cloud_from_url(url=""):
     except Exception as ex:
         print("Error in word_cloud_from_url="+str(ex))
 
-def word_cloud_from_excel(excel_path="",sheet_name="",header=0,columnName=""):
+def word_cloud_from_excel(excel_path="",sheet_name="",header=0,columnNames=""):
     """
     Function to create word cloud from a given website
     """
@@ -3671,23 +3754,25 @@ def word_cloud_from_excel(excel_path="",sheet_name="",header=0,columnName=""):
         if not excel_path:
             excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user('for WordCloud')
             
-        if not columnName:
+        if not columnNames:
             col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)
 
-            columnName = gui_get_dropdownlist_values_from_user('list of Column names',col_lst)    
+            columnNames = gui_get_dropdownlist_values_from_user('list of Column names',col_lst)    
 
         df = pd.read_excel(excel_path,sheet_name=sheet_name,header=header)
 
         text = ""
 
-        if columnName:
-            text = ''.join(str(df[columnName]))
-            text = text.replace("\n"," ")
+        if columnNames:
+            for col in columnNames:
+                text = ''.join(str(list(df[col])))
+                text = text.replace("\n"," ")
         
         wc = WordCloud(max_words=2000, width=800, height=600, max_font_size=40, random_state=None, relative_scaling=0)
         wc.generate(text)
         file_path = os.path.join(output_folder_path,"Excel_WordCloud.png")
         wc.to_file(file_path)
+
         print("Excel WordCloud saved at {}".format(file_path))
 
     except Exception as ex:
@@ -3860,7 +3945,7 @@ def convert_csv_to_excel(csv_path="",sep=""):
         if not sep:
             sep = gui_get_any_input_from_user("Delimeter Ex: |")
 
-        csv_file_name = extract_filename_from_filepath(csv_path)
+        csv_file_name = _extract_filename_from_filepath(csv_path)
         excel_file_name = csv_file_name + ".xlsx"        
         df=pd.read_csv(csv_path,sep=sep)
 
@@ -3943,14 +4028,16 @@ def email_send_outlook_desktop(TO="",CC="",BCC="",SUBJECT="",BODY="",ATTACHMENT_
     except Exception as ex:
         print("Error in send_email_outlook" + str(ex))
 
+@background
 def watch_this_folder(folder_to_watch=""):
     """
     Function to Monitor the given folder for creation / modification / deletion events. You can take required action, as per usecase
     Ex: watch_this_folder()
+    This function is made to run in background using decorative @background
     """
     try:
         if not folder_to_watch:
-            folder_to_watch= gui_get_folder_path_from_user('folder to Watch / Monitor')
+            folder_to_watch= gui_get_folder_path_from_user('folder to Watch / Monitor (use Ctrl+c to kill)')
 
         event_handler = FileMonitor_Handler()
         observer = watchdog.observers.Observer()
