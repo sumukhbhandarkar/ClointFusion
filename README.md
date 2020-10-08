@@ -38,7 +38,7 @@ pip install ClointFusion
 ## Anytime, if you are not getting how to use the function, just call empty function (without parameters) and GUI would pop asking you for required parameters.
 
 # We love your contribution
-Contribute by fixing bugs / feature enhancement / add documentation / many more ways...
+Contribute by feedback / bug fixes / feature enhancement / add documentation / many more ways...
 
 Please visit the GitHub repository: https://github.com/ClointFusion/ClointFusion
 

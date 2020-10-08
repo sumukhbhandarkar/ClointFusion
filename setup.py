@@ -22,11 +22,13 @@ setuptools.setup(
           
       ],
   classifiers=[
-    'Development Status :: 3 - Alpha',      
+    'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',      
     'Topic :: Software Development :: Build Tools',
-    'License :: OSI Approved :: BSD-4-Clause',  
+    'License :: OSI Approved :: BSD License',
     'Natural Language :: English',
+    'Operating System :: Microsoft :: Windows :: Windows 10',
+    'Framework :: Robot Framework',
   ],
   python_requires='>=3.8',
 )
