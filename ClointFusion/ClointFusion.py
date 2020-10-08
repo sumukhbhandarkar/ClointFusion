@@ -41,7 +41,7 @@ if os_name == 'windows':
 
     if os.path.exists(r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)) == False :
         with open(r"{}\ClointFusion\Scripts\activate_this.py".format(os_path), 'w') as f:
-            activate_this_py = """
+            activate_this_py ="""
 try:
     __file__
 except NameError:
@@ -3465,7 +3465,7 @@ def browser_mouse_double_click_h(User_Visible_Text_Element=""):
         print("Error in browser_mouse_double_click_h = "+str(ex))
     
         
-def browser_locate_element_h(element="",value=True):
+def browser_locate_element_h(element="",get_text=False):
     """
     Find the element by Xpath, id or css selection.
     """
@@ -3473,12 +3473,12 @@ def browser_locate_element_h(element="",value=True):
         if not element:
             element = gui_get_any_input_from_user('browser element to locate (Helium)')
         if value:
-            return S(element).value
-        return S(element)
+            return S(element).web_element.text
+        return S(element).web_element
     except Exception as ex:
         print("Error in browser_locate_element_h = "+str(ex))
     
-def browser_locate_elements_h(element="",value=True):
+def browser_locate_elements_h(element="",get_text=False):
     """
     Find the elements by Xpath, id or css selection.
     """
@@ -3486,8 +3486,8 @@ def browser_locate_elements_h(element="",value=True):
         if not element:
             element = gui_get_any_input_from_user('browser ElementS to locate (Helium)')
         if value:
-            return find_all(S(element).value)
-        return find_all(S(element))
+            return find_all(S(element).web_element.text)
+        return find_all(S(element).web_element)
     except Exception as ex:
         print("Error in browser_locate_elements_h = "+str(ex))
     
@@ -3506,18 +3506,18 @@ def browser_wait_until_h(text="",element="t"):
     except Exception as ex:
         print("Error in browser_wait_until_h = "+str(ex))
 
-def browser_mouse_click_xy_h(XYTuple=""):
-    """
-    Click on the given X Y Co-ordinates.
-    """
-    try:
-        if not XYTuple:
-            XYTuple1 = gui_get_any_input_from_user('browser X,Y co-ordinates for Mouse Left Click. Ex: (300,400)')
-            XYTuple = tuple(map(int, XYTuple1.split(',')))
+# def browser_mouse_click_xy_h(XYTuple=""):
+#     """
+#     Click on the given X Y Co-ordinates.
+#     """
+#     try:
+#         if not XYTuple:
+#             XYTuple1 = gui_get_any_input_from_user('browser X,Y co-ordinates for Mouse Left Click. Ex: (300,400)')
+#             XYTuple = tuple(map(int, XYTuple1.split(',')))
         
-        click(XYTuple)
-    except Exception as ex:
-        print("Error in browser_mouse_click_xy_h = "+str(ex))
+#         click(XYTuple)
+#     except Exception as ex:
+#         print("Error in browser_mouse_click_xy_h = "+str(ex))
     
 def browser_refresh_page_h():
     """
