@@ -6,13 +6,13 @@
 Cloint India Pvt. Ltd - Python3 functions for RPA (Automation)
 
 # Test Drive ClointFusion on Google Colabs
-<a href="https://colab.research.google.com/github/ClointFusion/ClointFusion/blob/master/ClointFusion_Labs.ipynb\" target="_parent\"><img src="https://colab.research.google.com/assets/colab-badge.svg\" alt="Open In Colab\"/></a>
+<a href="https://colab.research.google.com/github/ClointFusion/ClointFusion/blob/master/ClointFusion_Labs.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab\"/></a>
 
 # Installation on your local computer
 ## Currently we are supporting only Windows OS
 ## Please install latest Python with 64 bit
 ## All the dependent packages would be installed automatically in a separate virtual environment
-pip install ClointFusion
+pip install -U ClointFusion
 
 ## Usage: Open a new Python file in your favorite Python IDE and type:
 ## import ClointFusion as cf
@@ -38,7 +38,7 @@ pip install ClointFusion
 ## Anytime, if you are not getting how to use the function, just call empty function (without parameters) and GUI would pop asking you for required parameters.
 
 # We love your contribution
-Contribute by feedback / bug fixes / feature enhancement / add documentation / many more ways...
+Contribute by feedback / report issues / bug fixes / feature enhancement / add documentation / many more ways...
 
 Please visit the GitHub repository: https://github.com/ClointFusion/ClointFusion
 

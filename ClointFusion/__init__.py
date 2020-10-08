@@ -10,12 +10,10 @@ from ClointFusion.ClointFusion import excel_get_all_header_columns
 from ClointFusion.ClointFusion import gui_get_excel_sheet_header_from_user
 from ClointFusion.ClointFusion import gui_get_folder_path_from_user
 from ClointFusion.ClointFusion import gui_get_any_input_from_user
-from ClointFusion.ClointFusion import extract_filename_from_filepath
 from ClointFusion.ClointFusion import folder_create
 from ClointFusion.ClointFusion import excel_create_excel_file_in_given_folder
 from ClointFusion.ClointFusion import folder_create_text_file
 from ClointFusion.ClointFusion import excel_if_value_exists
-from ClointFusion.ClointFusion import get_image_from_base64
 from ClointFusion.ClointFusion import string_remove_special_characters
 from ClointFusion.ClointFusion import create_batch_file
 from ClointFusion.ClointFusion import excel_create_file
@@ -64,7 +62,6 @@ from ClointFusion.ClointFusion import key_press
 from ClointFusion.ClointFusion import key_write_enter
 from ClointFusion.ClointFusion import date_convert_to_US_format
 from ClointFusion.ClointFusion import mouse_search_snip_return_coordinates_x_y
-from ClointFusion.ClointFusion import is_text_found_on_screen
 from ClointFusion.ClointFusion import find_text_on_screen
 from ClointFusion.ClointFusion import mouse_search_snip_return_coordinates_box
 from ClointFusion.ClointFusion import mouse_find_highlight_click
@@ -93,7 +90,6 @@ from ClointFusion.ClointFusion import excel_geotag_using_zipcodes
 from ClointFusion.ClointFusion import launch_website_h
 from ClointFusion.ClointFusion import browser_navigate_h
 from ClointFusion.ClointFusion import browser_write_h
-from ClointFusion.ClointFusion import browser_key_press_h
 from ClointFusion.ClointFusion import browser_mouse_click_h
 from ClointFusion.ClointFusion import browser_mouse_double_click_h
 from ClointFusion.ClointFusion import browser_locate_element_h
