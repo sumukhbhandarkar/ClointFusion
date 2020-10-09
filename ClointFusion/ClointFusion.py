@@ -33,7 +33,7 @@ if os_name == 'windows':
     env_pip_path = os.path.join(win_venv_scripts_folder_path,"pip")
 
     if os.path.exists(r"{}\ClointFusion\cf_venv_activated.txt".format(os_path)) == False:
-        subprocess.call(r"cmd.exe -ArgumentList /c python -m venv {}\ClointFusion & {}\ClointFusion\Scripts\activate & python.exe -m pip install -U pip & python -m pip install -U wheel & python -m pip install -U ClointFusion & deactivate & type nul > {}\ClointFusion\cf_venv_activated.txt".format(os_path,os_path,os_path))
+        subprocess.call(r"cmd.exe -ArgumentList /c python -m venv {}\ClointFusion & {}\ClointFusion\Scripts\activate & python.exe -m pip install --upgrade pip & python -m pip install --upgrade wheel & python -m pip install --upgrade ClointFusion & deactivate & type nul > {}\ClointFusion\cf_venv_activated.txt".format(os_path,os_path,os_path))
 
         while True:
             if os.path.exists(r"{}\ClointFusion\cf_venv_activated.txt".format(os_path)):
@@ -70,10 +70,10 @@ for item in list(sys.path):
 sys.path[:0] = new_sys_path """
             f.write(activate_this_py)
 
-subprocess.call(r"cmd.exe -ArgumentList /c {}\ClointFusion\Scripts\activate".format(os_path))
+    subprocess.call(r"cmd.exe -ArgumentList /c {}\ClointFusion\Scripts\activate".format(os_path))
 
-activate_venv = r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)
-exec(open(activate_venv).read(), {'__file__': activate_venv})
+    activate_venv = r"{}\ClointFusion\Scripts\activate_this.py".format(os_path)
+    exec(open(activate_venv).read(), {'__file__': activate_venv})
 
 list_of_required_packages = ["wheel","urllib3","beautifulsoup4","pdfplumber","watchdog","wordcloud","scipy","numpy","howdoi","seaborn","texthero","emoji","helium","kaleido", "folium", "zipcodes", "plotly", "PyAutoGUI", "PyGetWindow", "XlsxWriter" ,"PySimpleGUI", "chromedriver-autoinstaller", "imutils", "keyboard", "joblib", "opencv-python", "python-imageseach-drov0", "openpyxl", "pandas", "pif", "pytesseract", "scikit-image", "selenium", "xlrd", "clipboard"]
 
@@ -122,7 +122,7 @@ def show_emoji(strInput=""):
     else:
         return(emoji.emojize(":{}:".format(str(strInput).lower()),use_aliases=True,variant="emoji_type"))
 
-@background
+# @background
 def load_missing_python_packages():
     """
     Installs missing python packages
@@ -650,9 +650,10 @@ def gui_get_any_file_from_user(msgForUser="the file : ",Extension_Without_Dot="*
             window.close()
             values['-KEY-'] = msgForUser
 
-            update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-FILE-']).strip())
+            if str(values['-KEY-']) and str(values['-FILE-']):
+                update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-FILE-']).strip())
         
-            if str(values['-FILE-']):
+            if values is not None and str(values['-FILE-']):
                 return str(values['-FILE-']).strip()
             else:
                 return None
@@ -753,7 +754,8 @@ def gui_get_consent_from_user(msgForUser="Continue ?"):
             window.close()
             values['-KEY-'] = msgForUser
 
-            update_semi_automatic_log(str(values['-KEY-']).strip(),str(oldValue))
+            if str(values['-KEY-']):
+                update_semi_automatic_log(str(values['-KEY-']).strip(),str(oldValue))
         
             return oldValue
 
@@ -814,7 +816,8 @@ def gui_get_dropdownlist_values_from_user(msgForUser="",dropdown_list=[],multi_s
             window.close()
             values['-KEY-'] = msgForUser
             
-            update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-EXCELCOL-']).strip())
+            if str(values['-KEY-']) and str(values['-EXCELCOL-']):
+                update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-EXCELCOL-']).strip())
 
             return values['-EXCELCOL-']
         
@@ -890,7 +893,9 @@ def gui_get_excel_sheet_header_from_user(msgForUser=""):
             values['-KEY-'] = msgForUser
             
             concatenated_value = values['-FILEPATH-'] + "," +  values ['-SHEET-'] + "," + values['-HEADER-']
-            update_semi_automatic_log(str(values['-KEY-']).strip(),str(concatenated_value))
+            
+            if str(values['-KEY-']) and concatenated_value:
+                update_semi_automatic_log(str(values['-KEY-']).strip(),str(concatenated_value))
 
             return values['-FILEPATH-'] , values ['-SHEET-'] , int(values['-HEADER-'])
         
@@ -942,9 +947,13 @@ def gui_get_folder_path_from_user(msgForUser="the folder : "):
             window.close()
             values['-KEY-'] = msgForUser
 
-            update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-FOLDER-']).strip())
+            if str(values['-KEY-']) and str(values['-FOLDER-']):
+                update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-FOLDER-']).strip())
         
-            return str(values['-FOLDER-']).strip()
+            if values is not None:
+                return str(values['-FOLDER-']).strip()
+            else:
+                return None
 
         else:
             return str(existing_value)
@@ -1000,6 +1009,7 @@ def gui_get_any_input_from_user(msgForUser="the value : ",password=False,mandato
             while True:
                 
                 event, values = window.read()
+
                 if event == sg.WIN_CLOSED or event == 'Close':
                     
                     if oldValue or (values and values['-VALUE-']):
@@ -1024,11 +1034,17 @@ def gui_get_any_input_from_user(msgForUser="the value : ",password=False,mandato
                             break
             
             window.close()
-            values['-KEY-'] = msgForUser
-            
-            update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-VALUE-']).strip())
 
-            return str(values['-VALUE-']).strip()
+            if values is not None:
+                values['-KEY-'] = msgForUser
+            
+            if values is not None and str(values['-KEY-']) and str(values['-VALUE-']):
+                update_semi_automatic_log(str(values['-KEY-']).strip(),str(values['-VALUE-']).strip())
+
+            if values is not None and str(values['-VALUE-']):
+                return str(values['-VALUE-']).strip()
+            else:
+                return None
         
         else:
             return str(existing_value)
@@ -1615,7 +1631,7 @@ def string_extract_only_alphabets(inputString=""):
     Returns only alphabets from given input string
     """
     if not inputString:
-        inputString = gui_get_any_input_from_user("input String")
+        inputString = gui_get_any_input_from_user("input string to get only Alphabets")
 
     outputStr = ''.join(e for e in inputString if e.isalpha())
     return outputStr 
@@ -1625,7 +1641,7 @@ def string_extract_only_numbers(inputString=""):
     Returns only numbers from given input string
     """
     if not inputString:
-        inputString = gui_get_any_input_from_user("input String")
+        inputString = gui_get_any_input_from_user("input string to get only Numbers")
 
     outputStr = ''.join(e for e in inputString if e.isnumeric())
     return outputStr       
@@ -1773,7 +1789,7 @@ def excel_get_row_column_count(excel_path="", sheet_name="Sheet1", header=0):
     """
     try:
         if not excel_path:
-                excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user("to get row/column count")
+            excel_path, sheet_name, header = gui_get_excel_sheet_header_from_user("to get row/column count")
             
         df = pd.read_excel(excel_path, sheet_name=sheet_name, header=header)
         row, col = df.shape
@@ -2968,7 +2984,7 @@ def _multitreading_locateimage(ai_snip_list,confidence=.8):
     except Exception as ex:
         print("Error in _multitreading_locateimage="+str(ex))
     
-def mouse_ai_locate_snip_on_screen(ai_snip_list=[], confidence=.8):
+def mouse_ai_locate_snip_on_screen(ai_snip_list=[], confidence=0.8):
     try:
         if not ai_snip_list:
             ai_snip_list = []
@@ -2991,7 +3007,7 @@ def mouse_ai_locate_snip_on_screen(ai_snip_list=[], confidence=.8):
     except Exception as ex:
         print("Error in mouse_ai_locate_snip_on_screen="+str(ex))
     
-def mouse_ai_locate_multiple_images_on_screen(ai_snip_list=[],confidence=.8,click=False):
+def mouse_ai_locate_multiple_images_on_screen(ai_snip_list=[],confidence=0.8,click=False):
     try:
         ai_multiple_x_y = []
         if not ai_snip_list:
@@ -3375,6 +3391,7 @@ def launch_website_h(URL="",dp=False,dn=True,igc=True,smcp=True,i=False,headless
     except Exception as ex:
         print("Error in launch_website_h = "+str(ex))
         kill_browser()
+        HLaunched = False
     
 def browser_navigate_h(url="",dp=False,dn=True,igc=True,smcp=True,i=False,headless=False):
     try:
@@ -3382,7 +3399,7 @@ def browser_navigate_h(url="",dp=False,dn=True,igc=True,smcp=True,i=False,headle
         Navigates to Specified URL.
         """
         if not url:
-            url = gui_get_any_file_from_user("website URL to Navigate using Helium functions. Ex: https://www.google.com")
+            url = gui_get_any_input_from_user("website URL to Navigate using Helium functions. Ex: https://www.google.com")
 
         global HLaunched
         if not HLaunched:
@@ -3392,6 +3409,7 @@ def browser_navigate_h(url="",dp=False,dn=True,igc=True,smcp=True,i=False,headle
         _accept_cookies_h()
     except Exception as ex:
         print("Error in browser_navigate_h = "+str(ex))
+        HLaunched = False
     
 def browser_write_h(Value="",User_Visible_Text_Element="",alert=False):
     """
@@ -3569,7 +3587,7 @@ def excel_clean_data(excel_path="",sheet_name='Sheet1',header=0,column_to_be_cle
             
         if not column_to_be_cleaned:
             col_lst = excel_get_all_header_columns(excel_path, sheet_name, header)  
-            column_to_be_cleaned = gui_get_dropdownlist_values_from_user('column list to Clean (removes digits/puntuation/space etc)',col_lst,multi_select=False)   
+            column_to_be_cleaned = gui_get_dropdownlist_values_from_user('column list to Clean (removes digits/puntuation/stop words etc)',col_lst,multi_select=False)   
             column_to_be_cleaned = column_to_be_cleaned[0]
 
         if column_to_be_cleaned:
@@ -4102,8 +4120,9 @@ class CaptureSnip(QtWidgets.QWidget):
         img = ImageGrab.grab(bbox=(x1, y1, x2, y2))
         file_num = str(len(os.listdir(img_folder_path)))
         file_name = os.path.join(img_folder_path,file_num + "_snip.PNG" )
+        print("Snip saved at " + str(file_name))
         img.save(file_name)
-        return file_name
+        # return file_name
         
 def capture_snip_now():
     """
@@ -4111,6 +4130,7 @@ def capture_snip_now():
 
     Ex: capture_snip_now()
     """
+    app = ""
     try:
         if message_counter_down_timer(3):
             app = QtWidgets.QApplication(sys.argv)
@@ -4121,6 +4141,10 @@ def capture_snip_now():
             
     except Exception as ex:
         print("Error in capture_snip_now="+str(ex))        
+        try:
+            sys.exit(app.exec_())
+        except:
+            pass
 
 def ON_semi_automatic_mode():
     """
